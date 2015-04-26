@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
-using Microsoft.DirectX.DirectInput;
 using WindowsInput;
 //http://damiproductions.darkbb.com/t504-c-sending-keys-with-the-sendinput-api
 
@@ -41,22 +40,22 @@ namespace SBC
         /// 
         /// See http://msdn.microsoft.com/en-us/library/ms646267(v=vs.85).aspx Section "Extended-Key Flag"
         /// </remarks>
-        public static bool IsExtendedKey(Microsoft.DirectX.DirectInput.Key keyCode)
+        public static bool IsExtendedKey(SBC.Key keyCode)
         {
             if (
-                keyCode == Microsoft.DirectX.DirectInput.Key.Insert ||
-                keyCode == Microsoft.DirectX.DirectInput.Key.Delete ||
-                keyCode == Microsoft.DirectX.DirectInput.Key.Home ||
-                keyCode == Microsoft.DirectX.DirectInput.Key.End ||
-                keyCode == Microsoft.DirectX.DirectInput.Key.Prior ||
-                keyCode == Microsoft.DirectX.DirectInput.Key.Next ||
-                keyCode == Microsoft.DirectX.DirectInput.Key.Right ||
-                keyCode == Microsoft.DirectX.DirectInput.Key.Up ||
-                keyCode == Microsoft.DirectX.DirectInput.Key.Left ||
-                keyCode == Microsoft.DirectX.DirectInput.Key.Down ||
-                keyCode == Microsoft.DirectX.DirectInput.Key.Numlock ||
-                keyCode == Microsoft.DirectX.DirectInput.Key.BackSpace ||
-                keyCode == Microsoft.DirectX.DirectInput.Key.Divide)
+                keyCode == SBC.Key.Insert ||
+                keyCode == SBC.Key.Delete ||
+                keyCode == SBC.Key.Home ||
+                keyCode == SBC.Key.End ||
+                keyCode == SBC.Key.Prior ||
+                keyCode == SBC.Key.Next ||
+                keyCode == SBC.Key.Right ||
+                keyCode == SBC.Key.Up ||
+                keyCode == SBC.Key.Left ||
+                keyCode == SBC.Key.Down ||
+                keyCode == SBC.Key.Numlock ||
+                keyCode == SBC.Key.BackSpace ||
+                keyCode == SBC.Key.Divide)
             {
                 return true;
             }
@@ -67,7 +66,7 @@ namespace SBC
         }
 
 
-        public static void SimulateKeyDown(Microsoft.DirectX.DirectInput.Key key)
+        public static void SimulateKeyDown(SBC.Key key)
         {
             INPUT structure = new INPUT();
             structure.type = (int)InputType.INPUT_KEYBOARD;
@@ -85,7 +84,7 @@ namespace SBC
             SendInput(1, pInputs, Marshal.SizeOf(structure));
         }
 
-        public static void SimulateKeyUp(Microsoft.DirectX.DirectInput.Key key)
+        public static void SimulateKeyUp(SBC.Key key)
         {
             INPUT structure = new INPUT();
             structure.type = (int)InputType.INPUT_KEYBOARD;
@@ -120,13 +119,13 @@ namespace SBC
 
 
 
-        public static void SimulateKeyPress(Microsoft.DirectX.DirectInput.Key key)
+        public static void SimulateKeyPress(SBC.Key key)
         {
             SimulateKeyDown(key);
             SimulateKeyUp(key);
         }
 
-        public static void SimulateModifiedKeyStroke(Microsoft.DirectX.DirectInput.Key modifier, Microsoft.DirectX.DirectInput.Key keycode)
+        public static void SimulateModifiedKeyStroke(SBC.Key modifier, SBC.Key keycode)
         {
             SimulateKeyDown(modifier);
             SimulateKeyDown(keycode);
@@ -135,13 +134,13 @@ namespace SBC
             SimulateKeyUp(modifier);            
         }
 
-        public static void SimulateModifiedKeyStroke(Microsoft.DirectX.DirectInput.Key[] modifierKeyCodes, Microsoft.DirectX.DirectInput.Key keycode)
+        public static void SimulateModifiedKeyStroke(SBC.Key[] modifierKeyCodes, SBC.Key keycode)
         {
-            foreach (Microsoft.DirectX.DirectInput.Key k in modifierKeyCodes) { SimulateKeyDown(k); }
+            foreach (SBC.Key k in modifierKeyCodes) { SimulateKeyDown(k); }
             SimulateKeyDown(keycode);
             System.Threading.Thread.Sleep(ModifiedKeyStrokeDelay);
             SimulateKeyUp(keycode);
-            foreach (Microsoft.DirectX.DirectInput.Key k in modifierKeyCodes) { SimulateKeyUp(k); }
+            foreach (SBC.Key k in modifierKeyCodes) { SimulateKeyUp(k); }
         }
 
                     
