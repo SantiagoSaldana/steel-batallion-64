@@ -430,7 +430,7 @@ namespace SBC
 			if (this.RawData != null) {
 				RawData(this,buf);
 			}
-			
+
 			CheckStateChanged(buf);
             Array.Copy(buf, 0, rawControlData, 0, readByteCount);
 
@@ -489,11 +489,15 @@ namespace SBC
 		/// </summary>
 		/// <param name="buf">Raw data buffer retrieved from the controller</param>
 		private void CheckStateChanged(byte[] buf) {
+            int a = 1;
+            int b = 1;
 			ButtonEnum[] values = (ButtonEnum[]) Enum.GetValues(typeof(ButtonEnum));
 			stateChangedArray = new ButtonState[values.Length];
             bool updateLights = false;
+            
 			for(int i = 0; i < values.Length; i++) 
             {
+                
 				ButtonMasks.ButtonMask mask = ButtonMasks.MaskList[(int) values[i]];
 				
 				ButtonState state = new ButtonState();
@@ -501,7 +505,7 @@ namespace SBC
 				state.currentState = ((buf[mask.bytePos] & mask.maskValue) > 0);
 				state.changed = isStateChanged(buf, mask.bytePos, mask.maskValue);
                 ButtonEnum currentButton = (ButtonEnum)(i);
-
+                
                 //only do something if button changed, and button was pressed and button is in hashtable
 				if (state.changed)
 				{
@@ -511,6 +515,7 @@ namespace SBC
                         updateLights = true;
                     }
                     //check button - light mapping
+                    
 					if(ButtonLights.ContainsKey(i))
 					{
 						updateLights = true;
@@ -530,7 +535,8 @@ namespace SBC
 								else
 									SetLEDState(currentLightProperties.LED, currentLightProperties.intensity);
 							}
-					  }
+					}
+                    /*
 					if (ButtonKeys.ContainsKey(i))
 					{
 						KeyProperties currentKeyProperties = (KeyProperties)(ButtonKeys[i]);
@@ -554,16 +560,17 @@ namespace SBC
 								    InputSimulator.SimulateKeyPress(currentKeyProperties.keyCode1);
 							}
 						}
-					}
+					}*/
 				}
 					
 
 				stateChangedArray[(int) values[i]] = state;
+                 
 			}
-
+            /*
 			if (updateLights)
 				RefreshLEDState();
-
+            */
 		}
 		
 		/// <summary>

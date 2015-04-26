@@ -39,10 +39,6 @@ using System.Timers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;//used for backgroundworker
-using Microsoft.DirectX.DirectInput;
-
-
-
 
 namespace SBC
 {
@@ -72,18 +68,18 @@ namespace SBC
 
     public struct KeyProperties
     {
-        public Microsoft.DirectX.DirectInput.Key keyCode1;
-        public Microsoft.DirectX.DirectInput.Key modifier;
+        public SBC.Key keyCode1;
+        public SBC.Key modifier;
         public bool holdDown;
         public bool useModifier;
-        public KeyProperties(Microsoft.DirectX.DirectInput.Key a, bool b)
+        public KeyProperties(SBC.Key a, bool b)
         {
-            modifier = (Microsoft.DirectX.DirectInput.Key)(0);
+            modifier = (SBC.Key)(0);
             keyCode1 = a;
             holdDown = b;
             useModifier = false;
         }
-        public KeyProperties(Microsoft.DirectX.DirectInput.Key a, Microsoft.DirectX.DirectInput.Key b, bool c)//used when we have a modifier
+        public KeyProperties(SBC.Key a, SBC.Key b, bool c)//used when we have a modifier
         {
             modifier = a;
             keyCode1 = b;
@@ -177,13 +173,13 @@ namespace SBC
                 SetLEDState((ControllerLEDEnum)((int)ControllerLEDEnum.GearN + gearValue), gearLightIntensity, false);
         }
 
-        public void AddButtonKeyLightMapping(ButtonEnum button, bool lightOnHold, int intensity, Microsoft.DirectX.DirectInput.Key keyCode, bool holdDown)
+        public void AddButtonKeyLightMapping(ButtonEnum button, bool lightOnHold, int intensity, SBC.Key keyCode, bool holdDown)
         {
             AddButtonLightMapping(button, lightOnHold, intensity);
             AddButtonKeyMapping(button, keyCode, holdDown);
         }
 
-        public void AddButtonKeyLightMapping(ButtonEnum button, bool lightOnHold, int intensity, Microsoft.DirectX.DirectInput.Key keyCode1, Microsoft.DirectX.DirectInput.Key keyCode2, bool holdDown)
+        public void AddButtonKeyLightMapping(ButtonEnum button, bool lightOnHold, int intensity, SBC.Key keyCode1, SBC.Key keyCode2, bool holdDown)
         {
             AddButtonLightMapping(button, lightOnHold, intensity);
             AddButtonKeyMapping(button, keyCode1, keyCode2, holdDown);
@@ -207,19 +203,19 @@ namespace SBC
             
         }
 
-        public void AddButtonKeyMapping(ButtonEnum button, Microsoft.DirectX.DirectInput.Key keyCode, bool holdDown)
+        public void AddButtonKeyMapping(ButtonEnum button, SBC.Key keyCode, bool holdDown)
         {
             if (ButtonKeys.Contains((int)button))
                 ButtonKeys.Remove((int)button);//to save on later garbage collection
             ButtonKeys[(int)button] = new KeyProperties(keyCode, holdDown);
         }
 
-        public void AddButtonKeyMapping(ButtonEnum button, Microsoft.DirectX.DirectInput.Key modifier, Microsoft.DirectX.DirectInput.Key keyCode, bool holdDown)
+        public void AddButtonKeyMapping(ButtonEnum button, SBC.Key modifier, SBC.Key keyCode, bool holdDown)
         {
             ButtonKeys[(int)button] = new KeyProperties(modifier,keyCode, holdDown);
         }
 
-        public Microsoft.DirectX.DirectInput.Key GetButtonKey(ButtonEnum button)
+        public SBC.Key GetButtonKey(ButtonEnum button)
         {
             KeyProperties value = (KeyProperties)(ButtonKeys[(int)button]);
             return value.keyCode1;
@@ -473,22 +469,22 @@ namespace SBC
             return isStateChanged(rawControlData, mask.bytePos, mask.maskValue);
         }
 
-        public void sendKeyPress(Microsoft.DirectX.DirectInput.Key keycode)
+        public void sendKeyPress(SBC.Key keycode)
         {
             InputSimulator.SimulateKeyPress(keycode);
         }
 
-        public void sendKeyPress(Microsoft.DirectX.DirectInput.Key modifier, Microsoft.DirectX.DirectInput.Key keycode)
+        public void sendKeyPress(SBC.Key modifier, SBC.Key keycode)
         {
             InputSimulator.SimulateModifiedKeyStroke(modifier, keycode);
         }
 
-        public void sendKeyDown(Microsoft.DirectX.DirectInput.Key keycode)
+        public void sendKeyDown(SBC.Key keycode)
         {
             InputSimulator.SimulateKeyDown(keycode);
         }
 
-        public void sendKeyUp(Microsoft.DirectX.DirectInput.Key keycode)
+        public void sendKeyUp(SBC.Key keycode)
         {
             InputSimulator.SimulateKeyUp(keycode);
         }
@@ -520,6 +516,7 @@ namespace SBC
                         GearLightsRefresh((int)unchecked((sbyte)buf[25]));//copied this code from GearLever accessor, changed it since we need ot
                         updateLights = true;
                     }
+                    
                     //check button - light mapping
 					if(ButtonLights.ContainsKey(i))
 					{
@@ -541,9 +538,13 @@ namespace SBC
 									SetLEDState(currentLightProperties.LED, currentLightProperties.intensity);
 							}
 					  }
+                    
 					if (ButtonKeys.ContainsKey(i))
 					{
-						KeyProperties currentKeyProperties = (KeyProperties)(ButtonKeys[i]);
+                     
+						KeyProperties currentKeyProperties = (KeyProperties)(ButtonKeys[i]);//this line is freezing program
+                        
+                        
 						if (currentKeyProperties.useModifier)
 						{
                             if (state.currentState)//button is pressed, then press key
@@ -564,7 +565,9 @@ namespace SBC
 								    InputSimulator.SimulateKeyPress(currentKeyProperties.keyCode1);
 							}
 						}
+                     
 					}
+                     
 				}
 					
 

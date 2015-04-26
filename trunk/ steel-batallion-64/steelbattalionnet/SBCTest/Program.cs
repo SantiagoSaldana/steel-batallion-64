@@ -42,6 +42,7 @@ namespace SBCTest {
 			// Initialize the controller
    		SBC.SteelBattalionController controller = new SBC.SteelBattalionController();
 			controller.Init(50);
+            controller.SetLEDState(SBC.ControllerLEDEnum.CockpitHatch, 15);
 			
 			// Uncomment if you want to monitor the raw data coming out of the controller
 			//controller.RawData += new SBC.SteelBattalionController.RawDataDelegate(controller_RawData);
@@ -57,13 +58,13 @@ namespace SBCTest {
 
 
 
-                Console.WriteLine( controller.TunerDial.ToString() + " " +
+                /*Console.WriteLine( controller.TunerDial.ToString() + " " +
                     controller.RotationLever.ToString() + " " + controller.SightChangeX.ToString() + " " + controller.SightChangeY.ToString() + " " +
                     controller.AimingX.ToString() + " " + controller.AimingY.ToString() + " " +
-                    controller.LeftPedal.ToString() + " " + controller.MiddlePedal.ToString() + " " + controller.RightPedal.ToString());
+                    controller.LeftPedal.ToString() + " " + controller.MiddlePedal.ToString() + " " + controller.RightPedal.ToString());*/
                 //Console.WriteLine(controller.GetBinaryBuffer(19, 20));
 
-                //Console.WriteLine(((int)unchecked((sbyte)controller.rawControlData[9])).ToString());
+                Console.WriteLine(((int)unchecked((sbyte)controller.rawControlData[9])).ToString());
                 
             }
 		}
@@ -79,7 +80,7 @@ namespace SBCTest {
 			foreach(SBC.ButtonState state in stateChangedArray) {
 				if (state.changed) {
 					// Write out the state of the button if it was changed
-					//Console.WriteLine("Button: {0,32}  State: {1}", state.button.ToString(), state.currentState.ToString());
+					Console.WriteLine("Button: {0,32}  State: {1}", state.button.ToString(), state.currentState.ToString());
                     
 				}
 			}

@@ -1,4 +1,4 @@
-﻿#define normalMode //used for testing of configuration files using testConfig.cs
+﻿//#define normalMode //used for testing of configuration files using testConfig.cs
 using System;
 using System.Threading;
 using System.Collections.Generic;
@@ -32,6 +32,7 @@ namespace SBC
 
 		private void Form1_Load(object sender, EventArgs e)
 		{
+
             fileString.Text = Properties.Settings.Default.storedFileName;
             //compilerParams.ReferencedAssemblies.Add("SBC.dll");
             //compilerParams.ReferencedAssemblies.Add("myVJoyWrapper.dll");
@@ -62,11 +63,12 @@ namespace SBC
         {
 			if(!ProgramStarted)
 			{
-			    CSharpCodeProvider codeProvider = new CSharpCodeProvider();
+			   /* CSharpCodeProvider codeProvider = new CSharpCodeProvider();
 			    codeProvider.CreateCompiler();
 			    //add compiler parameters
 
                 compilerParams = new CompilerParameters();
+                //compilerParams.ReferencedAssemblies.Add("Microsoft.DirectX.DirectInput.dll");
                 if (firstTime)//simple hack to fix issues with Microsoft.DirectX.DirectInput.dll not being able to be loaded multiple times
                 {
                     compilerParams.ReferencedAssemblies.Add("Microsoft.DirectX.DirectInput.dll");
@@ -93,19 +95,29 @@ namespace SBC
 				    errorBox.Lines = newLines;
 			    }
 			    else
-			    {
+			    {*/
                     firstTime = false;//once we create a sucessful assembly, we don't need to keep referencing DirectX.Direcinput
                     errorBox.Lines  = null;
-                    CSharpObject = results.CompiledAssembly.CreateInstance("SBC.DynamicClass");
+                    //CSharpObject = results.CompiledAssembly.CreateInstance("SBC.DynamicClass");
 
 				    // Create the thread object. This does not start the thread.
-				    workerObject = new Worker(ref CSharpObject,this);
+				    //workerObject = new Worker(ref CSharpObject,this);
+                    workerObject = new Worker(this);
 				    workerThread = new Thread(workerObject.DoWork);
                     Status.Text = "Running";
 				    ProgramStarted = true;
+
 				    // Start the worker thread.
-				    workerThread.Start();
-			    }
+                    try
+                    {
+                        workerThread.Start();
+                    }
+                    catch(Exception ex)
+                    {
+                        MessageBox.Show(ex.ToString());
+                    }
+
+			    //}
 			}
 
 		}
@@ -114,10 +126,11 @@ namespace SBC
 		{
             if (ProgramStarted)
             {
-                workerObject.RequestStop();
+                //workerObject.RequestStop();
                 // Use the Join method to block the current thread 
                 // until the object's thread terminates.
-                workerThread.Join();
+                //workerThread.Join();
+
                 Status.Text = "Stopped";
                 ProgramStarted = false;
             }
@@ -188,6 +201,10 @@ date.ToShortDateString() +
 	{
 		Object CSharpObject;
         Form1 myForm;
+        public Worker(Form1 form)
+        {
+            myForm = form;
+        }
 		public Worker(ref Object anObject, Form1 form)
 		{
 			CSharpObject = anObject;
@@ -215,6 +232,8 @@ date.ToShortDateString() +
 			        Thread.Sleep(refreshRate);
 		        }
 		        CSharpObject.GetType().InvokeMember("shutDown", System.Reflection.BindingFlags.InvokeMethod, null, CSharpObject, null);
+                return;
+
             }
             catch (Exception e)
             {
@@ -231,14 +250,17 @@ date.ToShortDateString() +
             {
                 MessageBox.Show(e.ToString());
             }
-
+            
             int refreshRate = config.getRefreshRate();
             while (!_shouldStop)
             {
                 config.mainLoop();
                 Thread.Sleep(refreshRate);
             }
+             
             config.shutDown();
+
+            return;
 #endif
 
         }

@@ -3,7 +3,7 @@
 //however that also means that it is actually pretty complicated.
 
 using System;
-using Microsoft.DirectX.DirectInput;
+//using Microsoft.DirectX.DirectInput;
 namespace SBC{
 public class DynamicClass
 {
@@ -27,7 +27,7 @@ const int refreshRate = 50;//number of milliseconds between call to mainLoop
         int emergencyLightIntensity = 15;//for stuff like eject,cockpit Hatch,Ignition, and Start
 
 		controller = new SteelBattalionController();
-		controller.Init(50);//50 is refresh rate in milliseconds
+		/*controller.Init(50);//50 is refresh rate in milliseconds
 		//set all buttons by default to light up only when you press them down
 
 		for(int i=4;i<4+30;i++)
@@ -35,11 +35,12 @@ const int refreshRate = 50;//number of milliseconds between call to mainLoop
 			if (i != (int)ButtonEnum.Eject)//excluding eject since we are going to flash that one
 			controller.AddButtonLightMapping((ButtonEnum)(i-1),(ControllerLEDEnum)(i),true,baseLineIntensity);
 		}
-		
+		/*
          controller.AddButtonKeyLightMapping(ButtonEnum.CockpitHatch,            true, 3,    Microsoft.DirectX.DirectInput.Key.A, true);//last true means if you hold down the button,		
 		 controller.AddButtonKeyLightMapping(ButtonEnum.FunctionF1,				true, 3,    Microsoft.DirectX.DirectInput.Key.B, true);
 		 controller.AddButtonKeyMapping(ButtonEnum.RightJoyMainWeapon,Microsoft.DirectX.DirectInput.Key.C, true);
-		 joystick = new vJoy();
+		 /*
+		 /*joystick = new vJoy();
 		 acquired = joystick.acquireVJD(1);
 		 joystick.resetAll();//have to reset before we use it
 		
@@ -55,7 +56,7 @@ const int refreshRate = 50;//number of milliseconds between call to mainLoop
 		 
 		desiredX = currentX = controller.AimingX;
 		desiredY = currentY = controller.AimingY;
-		 
+		*/
 	}
 	
 	//this is necessary, as main program calls this to know how often to call mainLoop
@@ -93,6 +94,7 @@ const int refreshRate = 50;//number of milliseconds between call to mainLoop
 	//this gets called once every refreshRate milliseconds by main program
 	public void mainLoop()
 	{
+	/*
 	float lowValue = 124;
 	float highValue = 255;
 	int gearValue;
@@ -128,7 +130,7 @@ const int refreshRate = 50;//number of milliseconds between call to mainLoop
 
 		//debugString = "in";
 		InputSimulator.MoveMouseBy(deltaX,deltaY);
-		}
+		}*/
 		/*
 		joystick.setAxis(1,controller.GearLever,HID_USAGES.HID_USAGE_SL1);	
 		
@@ -147,7 +149,7 @@ const int refreshRate = 50;//number of milliseconds between call to mainLoop
 		joystick.setAxis(1,controller.SightChangeY,HID_USAGES.HID_USAGE_RX);				
 		joystick.setAxis(1,controller.LeftPedal,HID_USAGES.HID_USAGE_RY);		*/				
 
-		
+		/*
 		joystick.setContPov(1,getDegrees(controller.SightChangeX,controller.SightChangeY),1);
 
 
@@ -157,6 +159,7 @@ const int refreshRate = 50;//number of milliseconds between call to mainLoop
 		}
 		
 		joystick.sendUpdate(1);
+		*/
 
 	}
 	
@@ -170,7 +173,7 @@ const int refreshRate = 50;//number of milliseconds between call to mainLoop
 	public void shutDown()
 	{
 		controller.UnInit();
-		joystick.Release(1);
+		//joystick.Release(1);
 	}
 	
 }
