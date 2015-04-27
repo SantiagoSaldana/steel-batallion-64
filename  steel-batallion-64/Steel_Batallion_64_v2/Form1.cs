@@ -63,16 +63,13 @@ namespace SBC
         {
 			if(!ProgramStarted)
 			{
-			   /* CSharpCodeProvider codeProvider = new CSharpCodeProvider();
+			    CSharpCodeProvider codeProvider = new CSharpCodeProvider();
 			    codeProvider.CreateCompiler();
 			    //add compiler parameters
 
                 compilerParams = new CompilerParameters();
+                compilerParams.ReferencedAssemblies.Add("vJoyInterfaceWrap.dll");
                 //compilerParams.ReferencedAssemblies.Add("Microsoft.DirectX.DirectInput.dll");
-                if (firstTime)//simple hack to fix issues with Microsoft.DirectX.DirectInput.dll not being able to be loaded multiple times
-                {
-                    compilerParams.ReferencedAssemblies.Add("Microsoft.DirectX.DirectInput.dll");
-                }
                 foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
                 {
                     compilerParams.ReferencedAssemblies.Add(assembly.Location);
@@ -95,7 +92,7 @@ namespace SBC
 				    errorBox.Lines = newLines;
 			    }
 			    else
-			    {*/
+			    {
                     firstTime = false;//once we create a sucessful assembly, we don't need to keep referencing DirectX.Direcinput
                     errorBox.Lines  = null;
                     //CSharpObject = results.CompiledAssembly.CreateInstance("SBC.DynamicClass");
@@ -117,7 +114,7 @@ namespace SBC
                         MessageBox.Show(ex.ToString());
                     }
 
-			    //}
+			    }
 			}
 
 		}
