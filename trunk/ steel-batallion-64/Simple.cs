@@ -3,7 +3,7 @@
 //however that also means that it is actually pretty complicated.
 
 using System;
-//using Microsoft.DirectX.DirectInput;
+using vJoyInterfaceWrap;
 namespace SBC{
 public class DynamicClass
 {
@@ -23,11 +23,12 @@ const int refreshRate = 50;//number of milliseconds between call to mainLoop
 	//this gets called once by main program
     public void Initialize()
     {
+	
         int baseLineIntensity = 1;//just an average value for LED intensity
         int emergencyLightIntensity = 15;//for stuff like eject,cockpit Hatch,Ignition, and Start
 
 		controller = new SteelBattalionController();
-		/*controller.Init(50);//50 is refresh rate in milliseconds
+		controller.Init(50);//50 is refresh rate in milliseconds
 		//set all buttons by default to light up only when you press them down
 
 		for(int i=4;i<4+30;i++)
@@ -35,28 +36,24 @@ const int refreshRate = 50;//number of milliseconds between call to mainLoop
 			if (i != (int)ButtonEnum.Eject)//excluding eject since we are going to flash that one
 			controller.AddButtonLightMapping((ButtonEnum)(i-1),(ControllerLEDEnum)(i),true,baseLineIntensity);
 		}
-		/*
-         controller.AddButtonKeyLightMapping(ButtonEnum.CockpitHatch,            true, 3,    Microsoft.DirectX.DirectInput.Key.A, true);//last true means if you hold down the button,		
-		 controller.AddButtonKeyLightMapping(ButtonEnum.FunctionF1,				true, 3,    Microsoft.DirectX.DirectInput.Key.B, true);
-		 controller.AddButtonKeyMapping(ButtonEnum.RightJoyMainWeapon,Microsoft.DirectX.DirectInput.Key.C, true);
-		 /*
-		 /*joystick = new vJoy();
-		 acquired = joystick.acquireVJD(1);
-		 joystick.resetAll();//have to reset before we use it
 		
-		joystick.setAxis(1,32768/2,HID_USAGES.HID_USAGE_SL1);			
-		joystick.setAxis(1,32768/2,HID_USAGES.HID_USAGE_X);
-		joystick.setAxis(1,32768/2,HID_USAGES.HID_USAGE_Y);
-		joystick.setAxis(1,32768/2,HID_USAGES.HID_USAGE_Z);//throttle
-		joystick.setAxis(1,32768/2,HID_USAGES.HID_USAGE_RZ);
-		joystick.setAxis(1,32768/2,HID_USAGES.HID_USAGE_SL0);		
-		joystick.setAxis(1,32768/2,HID_USAGES.HID_USAGE_RX);				
-		joystick.setAxis(1,32768/2,HID_USAGES.HID_USAGE_RY);	
+         controller.AddButtonKeyLightMapping(ButtonEnum.CockpitHatch,            true, 3,    SBC.Key.A, true);//last true means if you hold down the button,		
+		 controller.AddButtonKeyLightMapping(ButtonEnum.FunctionF1,				true, 3,    SBC.Key.B, true);
+		 controller.AddButtonKeyMapping(ButtonEnum.RightJoyMainWeapon,SBC.Key.C, true);
 		 
-		 
-		desiredX = currentX = controller.AimingX;
-		desiredY = currentY = controller.AimingY;
-		*/
+		 joystick = new vJoy();
+		 acquired = joystick.AcquireVJD(1);
+		 joystick.ResetAll();//have to reset before we use it
+		
+		joystick.SetAxis(32768/2,1,HID_USAGES.HID_USAGE_SL1);			
+		joystick.SetAxis(32768/2,1,HID_USAGES.HID_USAGE_X);
+		joystick.SetAxis(32768/2,1,HID_USAGES.HID_USAGE_Y);
+		joystick.SetAxis(32768/2,1,HID_USAGES.HID_USAGE_Z);//throttle
+		joystick.SetAxis(32768/2,1,HID_USAGES.HID_USAGE_RZ);
+		joystick.SetAxis(32768/2,1,HID_USAGES.HID_USAGE_SL0);		
+		joystick.SetAxis(32768/2,1,HID_USAGES.HID_USAGE_RX);				
+		joystick.SetAxis(32768/2,1,HID_USAGES.HID_USAGE_RY);	
+		
 	}
 	
 	//this is necessary, as main program calls this to know how often to call mainLoop
@@ -65,9 +62,9 @@ const int refreshRate = 50;//number of milliseconds between call to mainLoop
 		return refreshRate;
 	}
 	
-	private uint getDegrees(double x,double y)
+	private int getDegrees(double x,double y)
 	{
-		uint temp = (uint)(System.Math.Atan(y/x)* (180/Math.PI));
+		int temp = (int)(System.Math.Atan(y/x)* (180/Math.PI));
 		if(x < 0)
 			temp +=180;
 		if(x > 0 && y < 0)
@@ -93,73 +90,30 @@ const int refreshRate = 50;//number of milliseconds between call to mainLoop
 
 	//this gets called once every refreshRate milliseconds by main program
 	public void mainLoop()
-	{
-	/*
-	float lowValue = 124;
-	float highValue = 255;
-	int gearValue;
+	{		
 	
-	int numPixels = 600;
-	
-	desiredX = (int)((controller.AimingX / 1024.0) * numPixels);
-	desiredY = (int)((controller.AimingY / 1024.0) * numPixels);
+		joystick.SetAxis(controller.GearLever,1,HID_USAGES.HID_USAGE_SL1);	
+		
+		joystick.SetAxis(controller.AimingX,1,HID_USAGES.HID_USAGE_X);
+		joystick.SetAxis(controller.AimingY,1,HID_USAGES.HID_USAGE_Y);
+		
+		joystick.SetAxis(-1*(controller.RightPedal - controller.MiddlePedal),1,HID_USAGES.HID_USAGE_Z);//throttle
+		joystick.SetAxis(controller.RotationLever,1,HID_USAGES.HID_USAGE_RZ);
+		joystick.SetAxis(controller.SightChangeX,1,HID_USAGES.HID_USAGE_SL0);		
+		joystick.SetAxis(controller.SightChangeY,1,HID_USAGES.HID_USAGE_RX);				
+		joystick.SetAxis(controller.LeftPedal,1,HID_USAGES.HID_USAGE_RY);						
 
-	
-	if (controller.GearLever == -2)//R
-		gearValue = -255;
-	else if (controller.GearLever == -1)//N
-		gearValue = 124;		
-	else
-	{
-		gearValue = (int)(lowValue + (highValue - lowValue)*((controller.GearLever-1.0)/4.0));
-	}
-	
-		debugString = "not in";
-		if((bool)controller.GetButtonState(ButtonEnum.RightJoyMainWeapon))
+		
+		joystick.SetContPov(getDegrees(controller.SightChangeX,controller.SightChangeY),1,1);
+
+
+		for(int i=1;i<=41;i++)
 		{
-			debugString = "RightJoyMainWeapon";
-			desiredX = currentX;
-			desiredY = currentY;
-		}
-		if((bool)controller.GetButtonState(ButtonEnum.RightJoyLockOn))
-		{
-		int deltaX = desiredX - currentX;
-		int deltaY = desiredY - currentY;
-		currentX = desiredX;
-		currentY = desiredY;
-
-		//debugString = "in";
-		InputSimulator.MoveMouseBy(deltaX,deltaY);
-		}*/
-		/*
-		joystick.setAxis(1,controller.GearLever,HID_USAGES.HID_USAGE_SL1);	
-		
-		//joystick.setAxis(1,controller.AimingX,HID_USAGES.HID_USAGE_X);
-		//joystick.setAxis(1,controller.AimingY,HID_USAGES.HID_USAGE_Y);
-
-		
-		
-		
-		joystick.setAxis(1,32768/2,HID_USAGES.HID_USAGE_X);
-		joystick.setAxis(1,32768/2,HID_USAGES.HID_USAGE_Y);
-		
-		joystick.setAxis(1,-1*(controller.RightPedal - controller.MiddlePedal),HID_USAGES.HID_USAGE_Z);//throttle
-		joystick.setAxis(1,controller.RotationLever,HID_USAGES.HID_USAGE_RZ);
-		joystick.setAxis(1,controller.SightChangeX,HID_USAGES.HID_USAGE_SL0);		
-		joystick.setAxis(1,controller.SightChangeY,HID_USAGES.HID_USAGE_RX);				
-		joystick.setAxis(1,controller.LeftPedal,HID_USAGES.HID_USAGE_RY);		*/				
-
-		/*
-		joystick.setContPov(1,getDegrees(controller.SightChangeX,controller.SightChangeY),1);
-
-
-		for(int i=1;i<=32;i++)
-		{
-			joystick.setButton((bool)controller.GetButtonState(i-1),(uint)1,(char)(i-1));
+			joystick.SetBtn((bool)controller.GetButtonState(i-1),(uint)1,(char)(i-1));
 		}
 		
-		joystick.sendUpdate(1);
-		*/
+		//joystick.sendUpdate(1);
+		
 
 	}
 	
@@ -172,8 +126,8 @@ const int refreshRate = 50;//number of milliseconds between call to mainLoop
 	//this gets called at the end of the program and must be present, as it cleans up resources
 	public void shutDown()
 	{
-		controller.UnInit();
-		//joystick.Release(1);
+		/*controller.UnInit();
+		joystick.Release(1);*/
 	}
 	
 }

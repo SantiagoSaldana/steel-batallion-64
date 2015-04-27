@@ -19,51 +19,58 @@
 //
 using SBC;
 using System;
-using System.Collections;
+using vJoyInterfaceWrap;
 namespace SBC
 {
     public class testConfig
     {
+        String debugString = "";
         SteelBattalionController controller;
-        private Hashtable ButtonKeys = new Hashtable();
-        //vJoy joystick;
+        vJoy joystick;
         bool acquired;
-        int ticka = 0;
-        int loopa = 0;
-        int tickb = 0;
-        int loopb = 0;
-        int tickc = 0;
-        int loopc = 0;
-        int jj = 0;
-        int pedalmode = 1;
+        bool mouseStarted = false;
+        int desiredX;
+        int desiredY;
+        int currentX = -1;
+        int currentY = -1;
 
-        const int refreshRate = 30; // Number of milliseconds between call to mainLoop
+        const int refreshRate = 50;//number of milliseconds between call to mainLoop
 
-        int speed = 50;
-        int speedPrevious = 50; //used to check state change of GearLever
-        int peddleDeadZone = 30; //used to avoid peddle input when at rest
-        int peddleLoop = 0;//used to stop resting peddle loop
 
-        // This gets called once by main program
+        //this gets called once by main program
         public void Initialize()
         {
-            int baseLineIntensity = 3; // Just an average value for LED intensity
-            int emergencyLightIntensity = 15; // For stuff like eject,cockpit Hatch,Ignition, and Start
+
+            int baseLineIntensity = 1;//just an average value for LED intensity
+            int emergencyLightIntensity = 15;//for stuff like eject,cockpit Hatch,Ignition, and Start
 
             controller = new SteelBattalionController();
-            controller.Init(50); // 50 is refresh rate in milliseconds
-            controller.AddButtonKeyMapping(ButtonEnum.Washing,SBC.Key.Z, true);
-            //controller.UnInit();
+            controller.Init(50);//50 is refresh rate in milliseconds
+            //set all buttons by default to light up only when you press them down
 
+            for (int i = 4; i < 4 + 30; i++)
+            {
+                if (i != (int)ButtonEnum.Eject)//excluding eject since we are going to flash that one
+                    controller.AddButtonLightMapping((ButtonEnum)(i - 1), (ControllerLEDEnum)(i), true, baseLineIntensity);
+            }
+            /*
+            controller.AddButtonKeyLightMapping(ButtonEnum.CockpitHatch, true, 3, SBC.Key.A, true);//last true means if you hold down the button,		
+            controller.AddButtonKeyLightMapping(ButtonEnum.FunctionF1, true, 3, SBC.Key.B, true);
+            controller.AddButtonKeyMapping(ButtonEnum.RightJoyMainWeapon, SBC.Key.C, true);*/
 
-        }
+            joystick = new vJoy();
+            acquired = joystick.AcquireVJD(1);
+            joystick.ResetAll();//have to reset before we use it
 
-        public void AddButtonKeyMapping(ButtonEnum button, SBC.Key keyCode, bool holdDown)
-        {
-            if (ButtonKeys.Contains((int)button))
-            { int a = 1; }
-                //ButtonKeys.Remove((int)button);//to save on later garbage collection
-            //ButtonKeys[(int)button] = new KeyProperties(keyCode, holdDown);
+            joystick.SetAxis(32768 / 2, 1, HID_USAGES.HID_USAGE_SL1);
+            joystick.SetAxis(32768 / 2, 1, HID_USAGES.HID_USAGE_X);
+            joystick.SetAxis(32768 / 2, 1, HID_USAGES.HID_USAGE_Y);
+            joystick.SetAxis(32768 / 2, 1, HID_USAGES.HID_USAGE_Z);//throttle
+            joystick.SetAxis(32768 / 2, 1, HID_USAGES.HID_USAGE_RZ);
+            joystick.SetAxis(32768 / 2, 1, HID_USAGES.HID_USAGE_SL0);
+            joystick.SetAxis(32768 / 2, 1, HID_USAGES.HID_USAGE_RX);
+            joystick.SetAxis(32768 / 2, 1, HID_USAGES.HID_USAGE_RY);
+
         }
 
         //this is necessary, as main program calls this to know how often to call mainLoop
@@ -72,18 +79,74 @@ namespace SBC
             return refreshRate;
         }
 
+        private int getDegrees(double x, double y)
+        {
+            int temp = (int)(System.Math.Atan(y / x) * (180 / Math.PI));
+            if (x < 0)
+                temp += 180;
+            if (x > 0 && y < 0)
+                temp += 360;
+
+            temp += 90;//origin is vertical on POV not horizontal
+
+            if (temp > 360)//by adding 90 we may have gone over 360
+                temp -= 360;
+
+            temp *= 100;
+
+            if (temp > 35999)
+                temp = 35999;
+            if (temp < 0)
+                temp = 0;
+            return temp;
+        }
+
+        //	private int scaledValue(int min, int middle, int max, int deadZone)
+
+
+
         //this gets called once every refreshRate milliseconds by main program
         public void mainLoop()
         {
-        
+
+            joystick.SetAxis(controller.GearLever, 1, HID_USAGES.HID_USAGE_SL1);
+
+            joystick.SetAxis(controller.AimingX, 1, HID_USAGES.HID_USAGE_X);
+            joystick.SetAxis(controller.AimingY, 1, HID_USAGES.HID_USAGE_Y);
+
+            joystick.SetAxis(-1 * (controller.RightPedal - controller.MiddlePedal), 1, HID_USAGES.HID_USAGE_Z);//throttle
+            joystick.SetAxis(controller.RotationLever, 1, HID_USAGES.HID_USAGE_RZ);
+            joystick.SetAxis(controller.SightChangeX, 1, HID_USAGES.HID_USAGE_SL0);
+            joystick.SetAxis(controller.SightChangeY, 1, HID_USAGES.HID_USAGE_RX);
+            joystick.SetAxis(controller.LeftPedal, 1, HID_USAGES.HID_USAGE_RY);
+
+
+            joystick.SetContPov(getDegrees(controller.SightChangeX, controller.SightChangeY), 1, 1);
+
+
+            for (int i = 1; i <= 41; i++)
+            {
+                joystick.SetBtn((bool)controller.GetButtonState(i - 1), (uint)1, (char)(i - 1));
+            }
+
+            //joystick.sendUpdate(1);
+
+
         }
 
-        // This gets called at the end of the program and must be present, as it cleans up resources
+        //new necessary function used for debugging purposes
+        public String getDebugString()
+        {
+            return debugString;
+        }
+
+        //this gets called at the end of the program and must be present, as it cleans up resources
         public void shutDown()
         {
-        
-            //controller.UnInit();
-            //joystick.Release(1);
+            /*controller.UnInit();
+            joystick.Release(1);*/
         }
     }
 }
+	
+    
