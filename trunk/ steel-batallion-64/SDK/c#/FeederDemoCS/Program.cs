@@ -18,8 +18,8 @@
 //	Here starts and endless loop that feedes data into the virtual device
 //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
-//#define ROBUST
-#define EFFICIENT
+#define ROBUST
+//#define EFFICIENT
 
 using System;
 using System.Collections.Generic;

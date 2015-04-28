@@ -19,7 +19,6 @@
 //
 using SBC;
 using System;
-using vJoyInterfaceWrap;
 namespace SBC
 {
     public class testConfig
@@ -59,17 +58,17 @@ namespace SBC
             controller.AddButtonKeyMapping(ButtonEnum.RightJoyMainWeapon, SBC.Key.C, true);*/
 
             joystick = new vJoy();
-            acquired = joystick.AcquireVJD(1);
-            joystick.ResetAll();//have to reset before we use it
+            acquired = joystick.acquireVJD(1);
+            joystick.resetAll();//have to reset before we use it
 
-            joystick.SetAxis(32768 / 2, 1, HID_USAGES.HID_USAGE_SL1);
-            joystick.SetAxis(32768 / 2, 1, HID_USAGES.HID_USAGE_X);
-            joystick.SetAxis(32768 / 2, 1, HID_USAGES.HID_USAGE_Y);
-            joystick.SetAxis(32768 / 2, 1, HID_USAGES.HID_USAGE_Z);//throttle
-            joystick.SetAxis(32768 / 2, 1, HID_USAGES.HID_USAGE_RZ);
-            joystick.SetAxis(32768 / 2, 1, HID_USAGES.HID_USAGE_SL0);
-            joystick.SetAxis(32768 / 2, 1, HID_USAGES.HID_USAGE_RX);
-            joystick.SetAxis(32768 / 2, 1, HID_USAGES.HID_USAGE_RY);
+            joystick.setAxis(1,32768 / 2, HID_USAGES.HID_USAGE_SL1);
+            joystick.setAxis(1,32768 / 2, HID_USAGES.HID_USAGE_X);
+            joystick.setAxis(1,32768 / 2, HID_USAGES.HID_USAGE_Y);
+            joystick.setAxis(1,32768 / 2, HID_USAGES.HID_USAGE_Z);//throttle
+            joystick.setAxis(1,32768 / 2, HID_USAGES.HID_USAGE_RZ);
+            joystick.setAxis(1,32768 / 2, HID_USAGES.HID_USAGE_SL0);
+            joystick.setAxis(1,32768 / 2, HID_USAGES.HID_USAGE_RX);
+            joystick.setAxis(1,32768 / 2, HID_USAGES.HID_USAGE_RY);
 
         }
 
@@ -79,9 +78,9 @@ namespace SBC
             return refreshRate;
         }
 
-        private int getDegrees(double x, double y)
+        private uint getDegrees(double x, double y)
         {
-            int temp = (int)(System.Math.Atan(y / x) * (180 / Math.PI));
+            uint temp = (uint)(System.Math.Atan(y / x) * (180 / Math.PI));
             if (x < 0)
                 temp += 180;
             if (x > 0 && y < 0)
@@ -109,27 +108,30 @@ namespace SBC
         public void mainLoop()
         {
 
-            joystick.SetAxis(controller.GearLever, 1, HID_USAGES.HID_USAGE_SL1);
-
-            joystick.SetAxis(controller.AimingX, 1, HID_USAGES.HID_USAGE_X);
-            joystick.SetAxis(controller.AimingY, 1, HID_USAGES.HID_USAGE_Y);
-
-            joystick.SetAxis(-1 * (controller.RightPedal - controller.MiddlePedal), 1, HID_USAGES.HID_USAGE_Z);//throttle
-            joystick.SetAxis(controller.RotationLever, 1, HID_USAGES.HID_USAGE_RZ);
-            joystick.SetAxis(controller.SightChangeX, 1, HID_USAGES.HID_USAGE_SL0);
-            joystick.SetAxis(controller.SightChangeY, 1, HID_USAGES.HID_USAGE_RX);
-            joystick.SetAxis(controller.LeftPedal, 1, HID_USAGES.HID_USAGE_RY);
 
 
-            joystick.SetContPov(getDegrees(controller.SightChangeX, controller.SightChangeY), 1, 1);
+
+            joystick.setAxis(1,controller.GearLever,HID_USAGES.HID_USAGE_SL1);
+
+            joystick.setAxis(1,controller.AimingX,HID_USAGES.HID_USAGE_X);
+            joystick.setAxis(1,controller.AimingY,HID_USAGES.HID_USAGE_Y);
+
+            joystick.setAxis(1,-1 * (controller.RightPedal - controller.MiddlePedal),HID_USAGES.HID_USAGE_Z);//throttle
+            joystick.setAxis(1,controller.RotationLever,HID_USAGES.HID_USAGE_RZ);
+            joystick.setAxis(1,controller.SightChangeX,HID_USAGES.HID_USAGE_SL0);
+            joystick.setAxis(1,controller.SightChangeY,HID_USAGES.HID_USAGE_RX);
+            joystick.setAxis(1,controller.LeftPedal,HID_USAGES.HID_USAGE_RY);
 
 
-            for (int i = 1; i <= 41; i++)
+            joystick.setContPov(1,getDegrees(controller.SightChangeX, controller.SightChangeY), 1);
+
+
+            for (int i = 1; i <= 39; i++)
             {
-                joystick.SetBtn((bool)controller.GetButtonState(i - 1), (uint)1, (char)(i - 1));
+                joystick.setButton((bool)controller.GetButtonState(i - 1), (uint)1, (char)(i - 1));
             }
 
-            //joystick.sendUpdate(1);
+            joystick.sendUpdate(1);
 
 
         }
@@ -143,8 +145,8 @@ namespace SBC
         //this gets called at the end of the program and must be present, as it cleans up resources
         public void shutDown()
         {
-            /*controller.UnInit();
-            joystick.Release(1);*/
+            controller.UnInit();
+            joystick.Release(1);
         }
     }
 }
