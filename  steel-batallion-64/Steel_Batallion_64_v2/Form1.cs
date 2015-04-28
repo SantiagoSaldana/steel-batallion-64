@@ -68,7 +68,6 @@ namespace SBC
 			    //add compiler parameters
 
                 compilerParams = new CompilerParameters();
-                compilerParams.ReferencedAssemblies.Add("vJoyInterfaceWrap.dll");
                 //compilerParams.ReferencedAssemblies.Add("Microsoft.DirectX.DirectInput.dll");
                 foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
                 {

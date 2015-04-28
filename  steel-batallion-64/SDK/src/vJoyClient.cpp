@@ -1,262 +1,568 @@
-// vJoyClient.cpp : Simple feeder application
+// vJoyClient.cpp : Simple feeder application with a FFB demo
 //
-// Supports both types of POV Hats
 
+
+// Monitor Force Feedback (FFB) vJoy device
 #include "stdafx.h"
+//#include "Devioctl.h"
 #include "public.h"
-#include "vjoyinterface.h"
 #include <malloc.h>
 #include <string.h>
 #include <stdlib.h>
+#include "vjoyinterface.h"
+#include "Math.h"
 
-#pragma comment( lib, "VJOYINTERFACE" )
-#define  _CRT_SECURE_NO_WARNINGS
+// Default device ID (Used when ID not specified)
+#define DEV_ID		1
 
-// Use either ROBUST or EFFICIENT functions
-#define ROBUST
-//#define EFFICIENT
+// Prototypes
+void  CALLBACK FfbFunction(PVOID data);
+void  CALLBACK FfbFunction1(PVOID cb, PVOID data);
+
+BOOL PacketType2Str(FFBPType Type, LPTSTR Str);
+BOOL EffectType2Str(FFBEType Ctrl, LPTSTR Str);
+BOOL DevCtrl2Str(FFB_CTRL Type, LPTSTR Str);
+BOOL EffectOpStr(FFBOP Op, LPTSTR Str);
+int  Polar2Deg(BYTE Polar);
+int  Byte2Percent(BYTE InByte);
+int TwosCompByte2Int(BYTE in);
+
+
+int ffb_direction = 0;
+int ffb_strenght = 0;
+int serial_result = 0;
+
+
+JOYSTICK_POSITION_V2 iReport; // The structure that holds the full position data
 
 int
 __cdecl
-_tmain(__in int argc, __in PZPWSTR argv)
+_tmain(int argc, _TCHAR* argv[])
 {
+	int stat = 0;
+	UINT DevID = DEV_ID;
+	USHORT X = 0;
+	USHORT Y = 0;
+	USHORT Z = 0;
+	LONG   Btns = 0;
+	
 
-	USHORT X, Y, Z, ZR, XR;							// Position of several axes
-	BYTE id=1;										// ID of the target vjoy device (Default is 1)
-	UINT iInterface=1;								// Default target vJoy device
-	BOOL ContinuousPOV=FALSE;						// Continuous POV hat (or 4-direction POV Hat)
-	int count=0;
+	PVOID pPositionMessage;
+	UINT	IoCode = LOAD_POSITIONS;
+	UINT	IoSize = sizeof(JOYSTICK_POSITION);
+	// HID_DEVICE_ATTRIBUTES attrib;
+	BYTE id = 1;
+	UINT iInterface = 1;
 
+	// Define the effect names
+	static FFBEType FfbEffect= (FFBEType)-1;
+	LPCTSTR FfbEffectName[] =
+	{"NONE", "Constant Force", "Ramp", "Square", "Sine", "Triangle", "Sawtooth Up",\
+	"Sawtooth Down", "Spring", "Damper", "Inertia", "Friction", "Custom Force"};
 
-	// Get the ID of the target vJoy device
-	if (argc>1 && wcslen(argv[1]))
-		sscanf_s((char *)(argv[1]), "%d", &iInterface);
-
+	// Set the target Joystick - get it from the command-line 
+	if (argc>1)
+		DevID = _tstoi(argv[1]);
 
 	// Get the driver attributes (Vendor ID, Product ID, Version Number)
 	if (!vJoyEnabled())
 	{
-		_tprintf("vJoy driver not enabled: Failed Getting vJoy attributes.\n");
-		return -2;
+		_tprintf("Function vJoyEnabled Failed - make sure that vJoy is installed and enabled\n");
+		int dummy = getchar();
+		stat = - 2;
+		goto Exit;
 	}
 	else
 	{
-		_tprintf("Vendor: %S\nProduct :%S\nVersion Number:%S\n", TEXT(GetvJoyManufacturerString()),  TEXT(GetvJoyProductString()), TEXT(GetvJoySerialNumberString()));
+		wprintf(L"Vendor: %s\nProduct :%s\nVersion Number:%s\n", static_cast<TCHAR *> (GetvJoyManufacturerString()), static_cast<TCHAR *>(GetvJoyProductString()), static_cast<TCHAR *>(GetvJoySerialNumberString()));
 	};
 
-	WORD VerDll, VerDrv;
-	if (!DriverMatch(&VerDll, &VerDrv))
-		_tprintf("Failed\r\nvJoy Driver (version %04x) does not match vJoyInterface DLL (version %04x)\n", VerDrv ,VerDll);
-	else
-		_tprintf( "OK - vJoy Driver and vJoyInterface DLL match vJoyInterface DLL (version %04x)\n", VerDrv);
+	// Get the status of the vJoy device before trying to acquire it
+	VjdStat status = GetVJDStatus(DevID);
 
-	// Get the state of the requested device
-	VjdStat status = GetVJDStatus(iInterface);
 	switch (status)
 	{
 	case VJD_STAT_OWN:
-		_tprintf("vJoy Device %d is already owned by this feeder\n", iInterface);
+		_tprintf("vJoy device %d is already owned by this feeder\n", DevID);
 		break;
 	case VJD_STAT_FREE:
-		_tprintf("vJoy Device %d is free\n", iInterface);
+		_tprintf("vJoy device %d is free\n", DevID);
 		break;
 	case VJD_STAT_BUSY:
-		_tprintf("vJoy Device %d is already owned by another feeder\nCannot continue\n", iInterface);
+		_tprintf("vJoy device %d is already owned by another feeder\nCannot continue\n", DevID);
 		return -3;
 	case VJD_STAT_MISS:
-		_tprintf("vJoy Device %d is not installed or disabled\nCannot continue\n", iInterface);
+		_tprintf("vJoy device %d is not installed or disabled\nCannot continue\n", DevID);
 		return -4;
 	default:
-		_tprintf("vJoy Device %d general error\nCannot continue\n", iInterface);
+		_tprintf("vJoy device %d general error\nCannot continue\n", DevID);
 		return -1;
 	};
 
-	// Check which axes are supported
-	BOOL AxisX  = GetVJDAxisExist(iInterface, HID_USAGE_X);
-	BOOL AxisY  = GetVJDAxisExist(iInterface, HID_USAGE_Y);
-	BOOL AxisZ  = GetVJDAxisExist(iInterface, HID_USAGE_Z);
-	BOOL AxisRX = GetVJDAxisExist(iInterface, HID_USAGE_RX);
-	BOOL AxisRZ = GetVJDAxisExist(iInterface, HID_USAGE_RZ);
-	// Get the number of buttons and POV Hat switchessupported by this vJoy device
-	int nButtons  = GetVJDButtonNumber(iInterface);
-	int ContPovNumber = GetVJDContPovNumber(iInterface);
-	int DiscPovNumber = GetVJDDiscPovNumber(iInterface);
-
-	// Print results
-	_tprintf("\nvJoy Device %d capabilities:\n", iInterface);
-	_tprintf("Numner of buttons\t\t%d\n", nButtons);
-	_tprintf("Numner of Continuous POVs\t%d\n", ContPovNumber);
-	_tprintf("Numner of Descrete POVs\t\t%d\n", DiscPovNumber);
-	_tprintf("Axis X\t\t%s\n", AxisX?"Yes":"No");
-	_tprintf("Axis Y\t\t%s\n", AxisX?"Yes":"No");
-	_tprintf("Axis Z\t\t%s\n", AxisX?"Yes":"No");
-	_tprintf("Axis Rx\t\t%s\n", AxisRX?"Yes":"No");
-	_tprintf("Axis Rz\t\t%s\n", AxisRZ?"Yes":"No");
-
-
-
-	// Acquire the target
-	if ((status == VJD_STAT_OWN) || ((status == VJD_STAT_FREE) && (!AcquireVJD(iInterface))))
+	// Acquire the vJoy device
+	if (!AcquireVJD(DevID))
 	{
-		_tprintf("Failed to acquire vJoy device number %d.\n", iInterface);
-		return -1;
+		_tprintf("Failed to acquire vJoy device number %d.\n", DevID);
+		int dummy = getchar();
+		stat = -1;
+		goto Exit;
 	}
 	else
+		_tprintf("Acquired device number %d - OK\n", DevID);
+		
+
+
+	// Start FFB
+	BOOL Ffbstarted = FfbStart(DevID);
+	if (!Ffbstarted)
 	{
-		_tprintf("Acquired: vJoy device number %d.\n", iInterface);
+		_tprintf("Failed to start FFB on vJoy device number %d.\n", DevID);
+		int dummy = getchar();
+		stat = -3;
+		goto Exit;
 	}
+	else
+		_tprintf("Started FFB on vJoy device number %d - OK\n", DevID);
+
+	// Register Generic callback function
+	// At this point you instruct the Receptor which callback function to call with every FFB packet it receives
+	// It is the role of the designer to register the right FFB callback function
+	FfbRegisterGenCB(FfbFunction1, NULL);
 
 
 
-	_tprintf("\npress enter to stat feeding");
-	getchar();
 
-	X = 20;
-	Y = 30;
-	Z = 40;
-	XR = 60;
-	ZR = 80;
-
-	long value = 0;
-	BOOL res = FALSE;
-
-#ifdef ROBUST
-	// Reset this device to default values
-	ResetVJD(iInterface);
-
-	// Feed the device in endless loop
-	while(1)
-	{
-		// Set position of 4 axes
-		res = SetAxis(X, iInterface, HID_USAGE_X);
-		res = SetAxis(Y, iInterface, HID_USAGE_Y);
-		res = SetAxis(Z, iInterface, HID_USAGE_Z);
-		res = SetAxis(XR, iInterface, HID_USAGE_RX);
-		res = SetAxis(ZR, iInterface, HID_USAGE_RZ);
-
-		// Press/Release Buttons
-		res = SetBtn(TRUE, iInterface, count/50);
-		res = SetBtn(FALSE, iInterface, 1+count/50);
-
-		// If Continuous POV hat switches installed - make them go round
-		// For high values - put the switches in neutral state
-		if (ContPovNumber)
-		{
-			if ((count*70) < 30000)
-			{
-				res = SetContPov((DWORD)(count*70)		, iInterface, 1);
-				res = SetContPov((DWORD)(count*70)+2000	, iInterface, 2);
-				res = SetContPov((DWORD)(count*70)+4000	, iInterface, 3);
-				res = SetContPov((DWORD)(count*70)+6000	, iInterface, 4);
-			}
-			else
-			{
-				res = SetContPov(-1 , iInterface, 1);
-				res = SetContPov(-1 , iInterface, 2);
-				res = SetContPov(-1 , iInterface, 3);
-				res = SetContPov(-1 , iInterface, 4);
-			};
-		};
-
-		// If Discrete POV hat switches installed - make them go round
-		// From time to time - put the switches in neutral state
-		if (DiscPovNumber)
-		{
-			if (count < 550)
-			{
-				SetDiscPov(((count/20) + 0)%4, iInterface, 1);
-				SetDiscPov(((count/20) + 1)%4, iInterface, 2);
-				SetDiscPov(((count/20) + 2)%4, iInterface, 3);
-				SetDiscPov(((count/20) + 3)%4, iInterface, 4);
-			}
-			else
-			{
-				SetDiscPov(-1, iInterface, 1);
-				SetDiscPov(-1, iInterface, 2);
-				SetDiscPov(-1, iInterface, 3);
-				SetDiscPov(-1, iInterface, 4);
-			};
-		};
-
-		Sleep(20);
-		X+=150;
-		Y+=250;
-		Z+=350;
-		ZR-=200;
-		count++;
-		if (count > 640) count=0;
-	} // While
-#endif
-
-#ifdef EFFICIENT
-	// Start feeding in an endless loop
+	// Start endless loop
+	// The loop injects position data to the vJoy device
+	// If it fails it let's the user try again
+	//
+	// FFB Note:
+	// All FFB activity is performed in a separate thread created when registered the callback function   
 	while (1)
 	{
 
-		/*** Create the data packet that holds the entire position info ***/
-		id = (BYTE)iInterface;
+		// Set destenition vJoy device
+		id = (BYTE)DevID;
 		iReport.bDevice = id;
 
-		iReport.wAxisX=X;
-		iReport.wAxisY=Y;
-		iReport.wAxisZ=Z;
-		iReport.wAxisZRot=ZR;
-		iReport.wAxisXRot=XR;
+		// Set position data of 3 first axes
+		if (Z>35000) Z=0;
+		Z += 200;
+		iReport.wAxisZ = Z;
+		iReport.wAxisX = 32000-Z;
+		iReport.wAxisY = Z/2+7000;
 
-		// Set buttons one by one
-		iReport.lButtons = 1<<count/20;
+		// Set position data of first 8 buttons
+		Btns = 1<<(Z/4000);
+		iReport.lButtons = Btns;
 
-		if (ContPovNumber)
+		// Send position data to vJoy device
+		pPositionMessage = (PVOID)(&iReport);
+		if (!UpdateVJD(DevID, pPositionMessage))
 		{
-			// Make Continuous POV Hat spin
-			iReport.bHats		= (DWORD)(count*70);
-			iReport.bHatsEx1	= (DWORD)(count*70)+3000;
-			iReport.bHatsEx2	= (DWORD)(count*70)+5000;
-			iReport.bHatsEx3	= 15000 - (DWORD)(count*70);
-			if ((count*70) > 36000)
-			{
-				iReport.bHats = -1; // Neutral state
-				iReport.bHatsEx1 = -1; // Neutral state
-				iReport.bHatsEx2 = -1; // Neutral state
-				iReport.bHatsEx3 = -1; // Neutral state
-			};
+			printf("Feeding vJoy device number %d failed - try to enable device then press enter\n", DevID);
+			getchar();
+			AcquireVJD(DevID);
+		}
+		Sleep(2);
+	}
+
+Exit:
+	RelinquishVJD(DevID);
+	return 0;
+}
+
+
+// Generic callback function
+void CALLBACK FfbFunction(PVOID data)
+{
+	FFB_DATA * FfbData = (FFB_DATA *)data;
+	int size = FfbData->size;
+	_tprintf("\nFFB Size %d\n", size);
+
+	_tprintf("Cmd:%08.8X ", FfbData->cmd);
+	_tprintf("ID:%02.2X ", FfbData->data[0]);
+	_tprintf("Size:%02.2d ", static_cast<int>(FfbData->size - 8));
+	_tprintf(" - ");
+	for (UINT i = 0; i < FfbData->size - 8; i++)
+		_tprintf(" %02.2X", (UINT)FfbData->data);
+	_tprintf("\n");
+}
+
+void CALLBACK FfbFunction1(PVOID data, PVOID userdata)
+{
+	// Packet Header
+	_tprintf("\n ============= FFB Packet size Size %d =============\n", static_cast<int>(((FFB_DATA *)data)->size));
+
+	/////// Packet Device ID, and Type Block Index (if exists)
+#pragma region Packet Device ID, and Type Block Index
+	int DeviceID, BlockIndex;
+	FFBPType	Type;
+	TCHAR	TypeStr[100];
+
+	if (ERROR_SUCCESS == Ffb_h_DeviceID((FFB_DATA *)data, &DeviceID))
+		_tprintf("\n > Device ID: %d", DeviceID);
+	if (ERROR_SUCCESS == Ffb_h_Type((FFB_DATA *)data, &Type))
+	{
+		if (!PacketType2Str(Type, TypeStr))
+			_tprintf("\n > Packet Type: %d", Type);
+		else
+			_tprintf("\n > Packet Type: %s", TypeStr);
+
+	}
+	if (ERROR_SUCCESS == Ffb_h_EBI((FFB_DATA *)data, &BlockIndex))
+		_tprintf("\n > Effect Block Index: %d", BlockIndex);
+#pragma endregion
+
+
+	/////// Effect Report
+#pragma region Effect Report
+	FFB_EFF_CONST Effect;
+	if (ERROR_SUCCESS == Ffb_h_Eff_Const((FFB_DATA *)data, &Effect))
+	{
+		if (!EffectType2Str(Effect.EffectType, TypeStr))
+			_tprintf("\n >> Effect Report: %02x", Effect.EffectType);
+		else
+			_tprintf("\n >> Effect Report: %s", TypeStr);
+
+		if (Effect.Polar)
+		{
+			_tprintf("\n >> Direction: %d deg (%02x)", Polar2Deg(Effect.Direction), Effect.Direction);
+
+
 		}
 		else
 		{
-			// Make 5-position POV Hat spin
-			unsigned char pov[4];
-			pov[0] = ((count/20) + 0)%4;
-			pov[1] = ((count/20) + 1)%4;
-			pov[2] = ((count/20) + 2)%4;
-			pov[3] = ((count/20) + 3)%4;
-
-			iReport.bHats		= (pov[3]<<12) | (pov[2]<<8) | (pov[1]<<4) | pov[0];
-			if ((count) > 550)
-				iReport.bHats = -1; // Neutral state
+			_tprintf("\n >> X Direction: %02x", Effect.DirX);
+			_tprintf("\n >> Y Direction: %02x", Effect.DirY);
 		};
 
-		/*** Feed the driver with the position packet - is fails then wait for input then try to re-acquire device ***/
-		if (!UpdateVJD(iInterface, (PVOID)&iReport))
-		{
-			_tprintf("Feeding vJoy device number %d failed - try to enable device then press enter\n", iInterface);
-			getchar();
-			AcquireVJD(iInterface);
-			ContinuousPOV = (BOOL)GetVJDContPovNumber(iInterface);
-		}
+		if (Effect.Duration == 0xFFFF)
+			_tprintf("\n >> Duration: Infinit");
+		else
+			_tprintf("\n >> Duration: %d MilliSec", static_cast<int>(Effect.Duration));
 
-				Sleep(20);
-		count++;
-		if (count > 640) count=0;
+		if (Effect.TrigerRpt == 0xFFFF)
+			_tprintf("\n >> Trigger Repeat: Infinit");
+		else
+			_tprintf("\n >> Trigger Repeat: %d", static_cast<int>(Effect.TrigerRpt));
 
-		X+=150;
-		Y+=250;
-		Z+=350;
-		ZR-=200;
+		if (Effect.SamplePrd == 0xFFFF)
+			_tprintf("\n >> Sample Period: Infinit");
+		else
+			_tprintf("\n >> Sample Period: %d", static_cast<int>(Effect.SamplePrd));
+
+
+		_tprintf("\n >> Gain: %d%%", Byte2Percent(Effect.Gain));
 
 	};
-#endif
+#pragma endregion
+#pragma region PID Device Control
+	FFB_CTRL	Control;
+	TCHAR	CtrlStr[100];
+	if (ERROR_SUCCESS == Ffb_h_DevCtrl((FFB_DATA *)data, &Control) && DevCtrl2Str(Control, CtrlStr))
+		_tprintf("\n >> PID Device Control: %s", CtrlStr);
 
-	_tprintf("OK\n");
+#pragma endregion
+#pragma region Effect Operation
+	FFB_EFF_OP	Operation;
+	TCHAR	EffOpStr[100];
+	if (ERROR_SUCCESS == Ffb_h_EffOp((FFB_DATA *)data, &Operation) && EffectOpStr(Operation.EffectOp, EffOpStr))
+	{
+		_tprintf("\n >> Effect Operation: %s", EffOpStr);
+		if (Operation.LoopCount == 0xFF)
+			_tprintf("\n >> Loop until stopped");
+		else
+			_tprintf("\n >> Loop %d times", static_cast<int>(Operation.LoopCount));
 
-	return 0;
+	};
+#pragma endregion
+#pragma region Global Device Gain
+	BYTE Gain;
+	if (ERROR_SUCCESS == Ffb_h_DevGain((FFB_DATA *)data, &Gain))
+		_tprintf("\n >> Global Device Gain: %d", Byte2Percent(Gain));
+
+#pragma endregion
+#pragma region Condition
+	FFB_EFF_COND Condition;
+	if (ERROR_SUCCESS == Ffb_h_Eff_Cond((FFB_DATA *)data, &Condition))
+	{
+		if (Condition.isY)
+			_tprintf("\n >> Y Axis");
+		else
+			_tprintf("\n >> X Axis");
+		_tprintf("\n >> Center Point Offset: %d", TwosCompByte2Int(Condition.CenterPointOffset)*10000/127);
+		_tprintf("\n >> Positive Coefficient: %d", TwosCompByte2Int(Condition.PosCoeff)*10000/127);
+		_tprintf("\n >> Negative Coefficient: %d", TwosCompByte2Int(Condition.NegCoeff)*10000/127);
+		_tprintf("\n >> Positive Saturation: %d", Condition.PosSatur*10000/255);
+		_tprintf("\n >> Negative Saturation: %d", Condition.NegSatur*10000/255);
+		_tprintf("\n >> Dead Band: %d", Condition.DeadBand*10000/255);
+	}
+#pragma endregion
+#pragma region Envelope
+	FFB_EFF_ENVLP Envelope;
+	if (ERROR_SUCCESS == Ffb_h_Eff_Envlp((FFB_DATA *)data, &Envelope))
+	{
+		_tprintf("\n >> Attack Level: %d", Envelope.AttackLevel*10000/255);
+		_tprintf("\n >> Fade Level: %d", Envelope.FadeLevel*10000/255);
+		_tprintf("\n >> Attack Time: %d", static_cast<int>(Envelope.AttackTime));
+		_tprintf("\n >> Fade Time: %d", static_cast<int>(Envelope.FadeTime));
+	};
+
+#pragma endregion
+#pragma region Periodic
+	FFB_EFF_PERIOD EffPrd;
+	if (ERROR_SUCCESS == Ffb_h_Eff_Period((FFB_DATA *)data, &EffPrd))
+	{
+		_tprintf("\n >> Magnitude: %d", EffPrd.Magnitude * 10000 / 255);
+		_tprintf("\n >> Offset: %d", TwosCompByte2Int(EffPrd.Offset) * 10000 / 127);
+		_tprintf("\n >> Phase: %d", EffPrd.Phase * 3600 / 255);
+		_tprintf("\n >> Period: %d", static_cast<int>(EffPrd.Period));
+	};
+#pragma endregion
+
+#pragma region Effect Type
+	FFBEType EffectType;
+	if (ERROR_SUCCESS == Ffb_h_EffNew((FFB_DATA *)data, &EffectType))
+	{
+		if (EffectType2Str(EffectType, TypeStr))
+			_tprintf("\n >> Effect Type: %s", TypeStr);
+		else
+			_tprintf("\n >> Effect Type: Unknown");
+	}
+
+#pragma endregion
+
+#pragma region Ramp Effect
+	FFB_EFF_RAMP RampEffect;
+	if (ERROR_SUCCESS == Ffb_h_Eff_Ramp((FFB_DATA *)data, &RampEffect))
+	{
+		_tprintf("\n >> Ramp Start: %d", TwosCompByte2Int(RampEffect.Start) * 10000 / 127);
+		_tprintf("\n >> Ramp End: %d", TwosCompByte2Int(RampEffect.End) * 10000 / 127);
+	};
+
+#pragma endregion
+
+	_tprintf("\n");
+	FfbFunction(data);
+	_tprintf("\n ====================================================\n");
+
+}
+
+
+// Convert Packet type to String
+BOOL PacketType2Str(FFBPType Type, LPTSTR OutStr)
+{
+	BOOL stat = TRUE;
+	LPTSTR Str="";
+
+	switch (Type)
+	{
+	case PT_EFFREP:
+		Str = "Effect Report";
+		break;
+	case PT_ENVREP:
+		Str = "Envelope Report";
+		break;
+	case PT_CONDREP:
+		Str = "Condition Report";
+		break;
+	case PT_PRIDREP:
+		Str = "Periodic Report";
+		break;
+	case PT_CONSTREP:
+		Str = "Constant Force Report";
+		break;
+	case PT_RAMPREP:
+		Str = "Ramp Force Report";
+		break;
+	case PT_CSTMREP:
+		Str = "Custom Force Data Report";
+		break;
+	case PT_SMPLREP:
+		Str = "Download Force Sample";
+		break;
+	case PT_EFOPREP:
+		Str = "Effect Operation Report";
+		break;
+	case PT_BLKFRREP:
+		Str = "PID Block Free Report";
+		break;
+	case PT_CTRLREP:
+		Str = "PID Device Contro";
+		break;
+	case PT_GAINREP:
+		Str = "Device Gain Report";
+		break;
+	case PT_SETCREP:
+		Str = "Set Custom Force Report";
+		break;
+	case PT_NEWEFREP:
+		Str = "Create New Effect Report";
+		break;
+	case PT_BLKLDREP:
+		Str = "Block Load Report";
+		break;
+	case PT_POOLREP:
+		Str = "PID Pool Report";
+		break;
+	default:
+		stat = FALSE;
+		break;
+	}
+
+	if (stat)
+		_tcscpy_s(OutStr, 100, Str);
+
+	return stat;
+}
+
+// Convert Effect type to String
+BOOL EffectType2Str(FFBEType Type, LPTSTR OutStr)
+{
+	BOOL stat = TRUE;
+	LPTSTR Str="";
+
+	switch (Type)
+	{
+	case ET_NONE:
+		stat = FALSE;
+		break;
+	case ET_CONST:
+		Str="Constant Force";
+		break;
+	case ET_RAMP:
+		Str="Ramp";
+		break;
+	case ET_SQR:
+		Str="Square";
+		break;
+	case ET_SINE:
+		Str="Sine";
+		break;
+	case ET_TRNGL:
+		Str="Triangle";
+		break;
+	case ET_STUP:
+		Str="Sawtooth Up";
+		break;
+	case ET_STDN:
+		Str="Sawtooth Down";
+		break;
+	case ET_SPRNG:
+		Str="Spring";
+		break;
+	case ET_DMPR:
+		Str="Damper";
+		break;
+	case ET_INRT:
+		Str="Inertia";
+		break;
+	case ET_FRCTN:
+		Str="Friction";
+		break;
+	case ET_CSTM:
+		Str="Custom Force";
+		break;
+	default:
+		stat = FALSE;
+		break;
+	};
+
+	if (stat)
+		_tcscpy_s(OutStr, 100, Str);
+
+	return stat;
+}
+
+// Convert PID Device Control to String
+BOOL DevCtrl2Str(FFB_CTRL Ctrl, LPTSTR OutStr)
+{
+	BOOL stat = TRUE;
+	LPTSTR Str="";
+
+	switch (Ctrl)
+	{
+	case CTRL_ENACT:
+		Str="Enable Actuators";
+		break;
+	case CTRL_DISACT:
+		Str="Disable Actuators";
+		break;
+	case CTRL_STOPALL:
+		Str="Stop All Effects";
+		break;
+	case CTRL_DEVRST:
+		Str="Device Reset";
+		break;
+	case CTRL_DEVPAUSE:
+		Str="Device Pause";
+		break;
+	case CTRL_DEVCONT:
+		Str="Device Continue";
+		break;
+	default:
+		stat = FALSE;
+		break;
+	}
+	if (stat)
+		_tcscpy_s(OutStr, 100, Str);
+
+	return stat;
+}
+
+// Convert Effect operation to string
+BOOL EffectOpStr(FFBOP Op, LPTSTR OutStr)
+{
+	BOOL stat = TRUE;
+	LPTSTR Str="";
+
+	switch (Op)
+	{
+	case EFF_START:
+		Str="Effect Start";
+		break;
+	case EFF_SOLO:
+		Str="Effect Solo Start";
+		break;
+	case EFF_STOP:
+		Str="Effect Stop";
+		break;
+	default:
+		stat = FALSE;
+		break;
+	}
+
+	if (stat)
+		_tcscpy_s(OutStr, 100, Str);
+
+	return stat;
+}
+
+// Polar values (0x00-0xFF) to Degrees (0-360)
+int Polar2Deg(BYTE Polar)
+{
+	return ((UINT)Polar*360)/255;
+}
+
+// Convert range 0x00-0xFF to 0%-100%
+int Byte2Percent(BYTE InByte)
+{
+	return ((UINT)InByte*100)/255;
+}
+
+// Convert One-Byte 2's complement input to integer
+int TwosCompByte2Int(BYTE in)
+{
+	int tmp;
+	BYTE inv = ~in;
+	BOOL isNeg = in>>7;
+	if (isNeg)
+	{
+		tmp = (int)(inv);
+		tmp = -1*tmp;
+		return tmp;
+	}
+	else
+		return (int)in;
 }

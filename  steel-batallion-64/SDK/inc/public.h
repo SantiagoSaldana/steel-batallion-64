@@ -63,7 +63,7 @@ DEFINE_GUID(GUID_DEVINTERFACE_VJOY, 0x781EF630, 0x72B2, 0x11d2, 0xB8, 0x52, 0x00
 // Version parts
 #define VER_X_	0
 #define VER_H_	2
-#define VER_M_	0
+#define VER_M_	1
 #define VER_L_	5
 
 #define STRINGIFY_1(x)   #x
@@ -225,7 +225,23 @@ typedef struct _JOYSTICK_POSITION_V2
 #define HID_USAGE_WHL	0x38
 #define HID_USAGE_POV	0x39
 
+// HID Descriptor definitions - FFB Report IDs
+#define HID_ID_STATE	0x02	// Usage PID State report
+#define HID_ID_EFFREP	0x01	// Usage Set Effect Report
+#define HID_ID_ENVREP	0x02	// Usage Set Envelope Report
+#define HID_ID_CONDREP	0x03	// Usage Set Condition Report
+#define HID_ID_PRIDREP	0x04	// Usage Set Periodic Report
+#define HID_ID_CONSTREP	0x05	// Usage Set Constant Force Report
+#define HID_ID_RAMPREP	0x06	// Usage Set Ramp Force Report
+#define HID_ID_CSTMREP	0x07	// Usage Custom Force Data Report
+#define HID_ID_SMPLREP	0x08	// Usage Download Force Sample
+#define HID_ID_EFOPREP	0x0A	// Usage Effect Operation Report
+#define HID_ID_BLKFRREP	0x0B	// Usage PID Block Free Report
+#define HID_ID_CTRLREP	0x0C	// Usage PID Device Control
+#define HID_ID_GAINREP	0x0D	// Usage Device Gain Report
+#define HID_ID_SETCREP	0x0E	// Usage Set Custom Force Report
+#define HID_ID_NEWEFREP	0x01	// Usage Create New Effect Report
+#define HID_ID_BLKLDREP	0x02	// Usage Block Load Report
+#define HID_ID_POOLREP	0x03	// Usage PID Pool Report
 
 #endif
-
-
