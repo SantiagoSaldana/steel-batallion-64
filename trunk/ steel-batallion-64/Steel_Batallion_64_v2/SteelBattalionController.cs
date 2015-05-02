@@ -151,6 +151,11 @@ namespace SBC
             gearLightIntensity = intensity;
         }
 
+        public static int getTotalButtons()
+        {
+            return 39;
+        }
+
         //this only sets the gearLights, you still have to refreshlights
         private void GearLightsRefresh(int gearValue)
         {
@@ -221,7 +226,7 @@ namespace SBC
             return value.keyCode1;
         }
 
-        private ControllerLEDEnum GetLightForButton(ButtonEnum button)
+        public ControllerLEDEnum GetLightForButton(ButtonEnum button)
         {
             int buttonNumber =(int)button;
             if( buttonNumber >= 3 && buttonNumber <33)
