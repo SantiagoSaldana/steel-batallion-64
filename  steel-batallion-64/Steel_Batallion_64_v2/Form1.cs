@@ -1,4 +1,4 @@
-﻿//#define normalMode //used for testing of configuration files using testConfig.cs
+﻿#define normalMode //used for testing of configuration files using testConfig.cs
 using System;
 using System.Threading;
 using System.Collections.Generic;
@@ -30,8 +30,30 @@ namespace SBC
 			InitializeComponent();
 		}
 
+        private void checkvJoyProperties()
+        {
+            vJoy joystick = new vJoy();
+            string installedVersion;
+            // Get the driver attributes (Vendor ID, Product ID, Version Number)
+            if (!joystick.isEnabled())
+            {
+                MessageBox.Show("vJoy driver not enabled: Failed Getting vJoy attributes.\n");
+            }
+            else
+            {
+                installedVersion = joystick.getSerialNumberString();
+                if (installedVersion != joystick.getCompiledVersionNumber())
+                    MessageBox.Show("vJoy version :" + installedVersion + "does not match required version of 2.1.5");
+            }
+            //Console.WriteLine("Vendor: {0}\nProduct :{1}\nVersion Number:{2}\n", joystick.GetvJoyManufacturerString(), joystick.GetvJoyProductString(), joystick.GetvJoySerialNumberString());
+            
+
+            int a = 1;
+        }
+
 		private void Form1_Load(object sender, EventArgs e)
 		{
+            checkvJoyProperties();
 
             fileString.Text = Properties.Settings.Default.storedFileName;
             //compilerParams.ReferencedAssemblies.Add("SBC.dll");
@@ -76,6 +98,7 @@ namespace SBC
 
 			    String[] fileNames = new String[1];
 
+                
 			    CompilerResults results = codeProvider.CompileAssemblyFromFile(compilerParams, fileString.Text);
 			    if (results.Errors.Count > 0)
 			    {
@@ -94,11 +117,11 @@ namespace SBC
 			    {
                     firstTime = false;//once we create a sucessful assembly, we don't need to keep referencing DirectX.Direcinput
                     errorBox.Lines  = null;
-                    //CSharpObject = results.CompiledAssembly.CreateInstance("SBC.DynamicClass");
+                    CSharpObject = results.CompiledAssembly.CreateInstance("SBC.DynamicClass");
 
 				    // Create the thread object. This does not start the thread.
-				    //workerObject = new Worker(ref CSharpObject,this);
-                    workerObject = new Worker(this);
+				    workerObject = new Worker(ref CSharpObject,this);
+                    //workerObject = new Worker(this);
 				    workerThread = new Thread(workerObject.DoWork);
                     Status.Text = "Running";
 				    ProgramStarted = true;
@@ -122,10 +145,10 @@ namespace SBC
 		{
             if (ProgramStarted)
             {
-                //workerObject.RequestStop();
+                workerObject.RequestStop();
                 // Use the Join method to block the current thread 
                 // until the object's thread terminates.
-                //workerThread.Join();
+                workerThread.Join();
 
                 Status.Text = "Stopped";
                 ProgramStarted = false;
