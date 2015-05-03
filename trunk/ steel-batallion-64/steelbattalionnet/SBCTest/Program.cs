@@ -58,13 +58,13 @@ namespace SBCTest {
 
 
 
-                /*Console.WriteLine( controller.TunerDial.ToString() + " " +
+                Console.WriteLine( controller.TunerDial.ToString() + " " +
                     controller.RotationLever.ToString() + " " + controller.SightChangeX.ToString() + " " + controller.SightChangeY.ToString() + " " +
                     controller.AimingX.ToString() + " " + controller.AimingY.ToString() + " " +
-                    controller.LeftPedal.ToString() + " " + controller.MiddlePedal.ToString() + " " + controller.RightPedal.ToString());*/
+                    controller.LeftPedal.ToString() + " " + controller.MiddlePedal.ToString() + " " + controller.RightPedal.ToString());
                 //Console.WriteLine(controller.GetBinaryBuffer(19, 20));
 
-                Console.WriteLine(((int)unchecked((sbyte)controller.rawControlData[9])).ToString());
+                //Console.WriteLine(((int)unchecked((sbyte)controller.rawControlData[9])).ToString());
                 
             }
 		}
