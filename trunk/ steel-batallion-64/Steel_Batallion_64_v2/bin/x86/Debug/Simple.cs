@@ -34,10 +34,10 @@ public class DynamicClass
                 if (i != (int)ButtonEnum.Eject)//excluding eject since we are going to flash that one
                     controller.AddButtonLightMapping((ButtonEnum)(i - 1), (ControllerLEDEnum)(i), true, baseLineIntensity);
             }
-            /*
+            
             controller.AddButtonKeyLightMapping(ButtonEnum.CockpitHatch, true, 3, SBC.Key.A, true);//last true means if you hold down the button,		
-            controller.AddButtonKeyLightMapping(ButtonEnum.FunctionF1, true, 3, SBC.Key.B, true);
-            controller.AddButtonKeyMapping(ButtonEnum.RightJoyMainWeapon, SBC.Key.C, true);*/
+            controller.AddButtonKeyLightMapping(ButtonEnum.FunctionF1, true, 3, Microsoft.DirectX.DirectInput.Key.B, true);
+            controller.AddButtonKeyMapping(ButtonEnum.RightJoyMainWeapon, SBC.Key.C, true);
 
             joystick = new vJoy();
             acquired = joystick.acquireVJD(1);
@@ -93,22 +93,22 @@ public class DynamicClass
 
 
 
-            joystick.setAxis(1,controller.GearLever,HID_USAGES.HID_USAGE_SL1);
+            joystick.setAxis(1,controller.Scaled.GearLever,HID_USAGES.HID_USAGE_SL1);
 
-            joystick.setAxis(1,controller.AimingX,HID_USAGES.HID_USAGE_X);
-            joystick.setAxis(1,controller.AimingY,HID_USAGES.HID_USAGE_Y);
+            joystick.setAxis(1,controller.Scaled.AimingX,HID_USAGES.HID_USAGE_X);
+            joystick.setAxis(1,controller.Scaled.AimingY,HID_USAGES.HID_USAGE_Y);
 
-            joystick.setAxis(1,-1 * (controller.RightPedal - controller.MiddlePedal),HID_USAGES.HID_USAGE_Z);//throttle
-            joystick.setAxis(1,controller.RotationLever,HID_USAGES.HID_USAGE_RZ);
-            joystick.setAxis(1,controller.SightChangeX,HID_USAGES.HID_USAGE_SL0);
-            joystick.setAxis(1,controller.SightChangeY,HID_USAGES.HID_USAGE_RX);
-            joystick.setAxis(1,controller.LeftPedal,HID_USAGES.HID_USAGE_RY);
+            joystick.setAxis(1,-1 * (controller.Scaled.RightPedal - controller.Scaled.MiddlePedal),HID_USAGES.HID_USAGE_Z);//throttle
+            joystick.setAxis(1,controller.Scaled.RotationLever,HID_USAGES.HID_USAGE_RZ);
+            joystick.setAxis(1,controller.Scaled.SightChangeX,HID_USAGES.HID_USAGE_SL0);
+            joystick.setAxis(1,controller.Scaled.SightChangeY,HID_USAGES.HID_USAGE_RX);
+            joystick.setAxis(1,controller.Scaled.LeftPedal,HID_USAGES.HID_USAGE_RY);
 
 
             joystick.setContPov(1,getDegrees(controller.SightChangeX, controller.SightChangeY), 1);
 
 
-            for (int i = 1; i <= 39; i++)
+            for (int i = 1; i <= 8; i++)
             {
                 joystick.setButton((bool)controller.GetButtonState(i - 1), (uint)1, (char)(i - 1));
             }

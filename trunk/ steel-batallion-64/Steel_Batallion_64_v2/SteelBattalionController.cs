@@ -33,12 +33,12 @@ using System.CodeDom.Compiler;
 using Microsoft.CSharp;
 using System.Text;
 using System.Text.RegularExpressions;
-using LibUsbDotNet;
-using LibUsbDotNet.Main;
+using MadWizard.WinUSBNet;
 using System.Timers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;//used for backgroundworker
+using System.Linq;
 
 namespace SBC
 {
@@ -106,12 +106,13 @@ namespace SBC
 	public class SteelBattalionController {
 		#region Public and Private variables
 		private DateTime LastDataEventDate = DateTime.Now;
-		private UsbDevice MyUsbDevice;
+		private USBDevice MyUsbDevice;
         private Hashtable ButtonLights = new Hashtable();
         private Hashtable ButtonKeys = new Hashtable();
         private bool updateGearLights = true;
         private int gearLightIntensity = 3;
         public ButtonState[] stateChangedArray;
+        public Scaled Scaled;
 
         public delegate void ButtonStateChangedDelegate(SteelBattalionController controller, ButtonState[] arr);
 		public event ButtonStateChangedDelegate ButtonStateChanged;
@@ -120,13 +121,17 @@ namespace SBC
 		public event RawDataDelegate RawData;
         public POVdirection POVhat = POVdirection.CENTER;
 
-		UsbEndpointReader reader = null;
-		UsbEndpointWriter writer = null;
+        private const int _signedAxisMin = -512;
+        private const int _signedAxisMax = -511;
+
+        private const int _unsignedAxisMin = 0;
+        private const int _unsignedAxisMax = 1023;
+
+        USBPipe reader;
+        USBPipe writer;
 		
 		System.Timers.Timer pollTimer = new System.Timers.Timer();
 		
-		// The USB device finder that looks for the Steel Batallion controller
-		private UsbDeviceFinder MyUsbFinder = new UsbDeviceFinder(0x0A7B, 0xD000);
 
 		/// <summary>
 		/// The byte buffer that the raw control data is stored
@@ -142,7 +147,9 @@ namespace SBC
 		/// <summary>
 		/// Constructor for the controller.  Does nothing at the moment.
 		/// </summary>
-		public SteelBattalionController() {
+		public SteelBattalionController() 
+        {
+            Scaled = new Scaled(this);
 		}
 
         public void setGearLights(bool update,int intensity)
@@ -275,11 +282,7 @@ namespace SBC
 		/// Refreshes the LED buffer/state on the controller
 		/// </summary>
 		public void RefreshLEDState() {
-			ErrorCode ec = ErrorCode.None;
-			int bytesWritten;
-			
-			ec = writer.Write(rawLEDData, 1000, out bytesWritten);
-			if (ec != ErrorCode.None) throw new Exception(UsbDevice.LastErrorString);
+            writer.Write(rawLEDData);
 		}
 
 		/// <summary>
@@ -303,29 +306,23 @@ namespace SBC
 		public void Init(int Interval) {
 			//ErrorCode ec = ErrorCode.None;
 
-			// Find and open the usb device.
-			MyUsbDevice = UsbDevice.OpenUsbDevice(MyUsbFinder);
-			if (MyUsbDevice == null) throw new Exception("Device Not Found.");
 
-			IUsbDevice wholeUsbDevice = MyUsbDevice as IUsbDevice;
-			if (!ReferenceEquals(wholeUsbDevice, null)) {
-				wholeUsbDevice.SetConfiguration(1);
-				wholeUsbDevice.ClaimInterface(0);
-			}
-			
-			reader = MyUsbDevice.OpenEndpointReader(ReadEndpointID.Ep02);
-			writer = MyUsbDevice.OpenEndpointWriter(WriteEndpointID.Ep01);
+            //HKEY_LOCAL_MACHINE\System\CurrentControlSet\Enum\USB\VID_0A7B&PID_D000\6&688a3b8&0&1\Device Parameters\DeviceInterfaceGUIDs
+            USBDeviceInfo[] details = USBDevice.GetDevices("{5C2B3F1A-E9B8-4BD6-9D19-8A283B85726E}");
+            USBDeviceInfo match = details.First(info => info.VID == 0x0A7B && info.PID == 0xD000);
+            MyUsbDevice = new USBDevice(match);
+            reader = MyUsbDevice.Interfaces.First().InPipe;
+            writer = MyUsbDevice.Interfaces.First().OutPipe;
 
-            int readByteCount = 0;
             byte[] buf = new byte[64];
-            reader.Read(buf, 0, 64, 1000, out readByteCount);
-
+            
+            reader.Read(buf);//can't remember why I do this.
 
 			ButtonMasks.InitializeMasks();
 
 			SetPollingInterval(Interval);
 			pollTimer.Elapsed += new ElapsedEventHandler(pollTimer_Elapsed);
-			pollTimer.Start();
+            pollTimer.Start();
 
 			TestLEDs();
             if (updateGearLights)
@@ -423,17 +420,19 @@ namespace SBC
 		/// keep your event handlers optimized for analyzing the controller data.
 		/// </remarks>
 		private void pollTimer_Elapsed(object sender, ElapsedEventArgs e) {
-			pollTimer.Stop();
-			int readByteCount = 0;
+			
+            pollTimer.Stop();
 			byte[] buf = new byte[64];
-			reader.Read(buf, 0, 64, 1000, out readByteCount);
+            reader.Read(buf);
+
+
 			
 			if (this.RawData != null) {
 				RawData(this,buf);
 			}
-			
+
 			CheckStateChanged(buf);
-            Array.Copy(buf, 0, rawControlData, 0, readByteCount);
+            Array.Copy(buf, 0, rawControlData, 0, rawControlData.Length);//changed here, since WinUSB.read doesn't return bytes read, maybe it always fills buffer with what is available?
 
             //moved this section out of CheckStateChanged since we want this to go off after the data from buf has been copied over to rawControlData
 			if ((Enum.GetValues(typeof(ButtonEnum)).Length > 0) && (this.ButtonStateChanged != null))
@@ -442,6 +441,7 @@ namespace SBC
 
 			//Console.WriteLine(ConvertToHex(rawControlData, rawControlData.Length));
 			pollTimer.Start();
+             
 		}
         /// <summary>
         /// Checks the individual button state
@@ -453,16 +453,6 @@ namespace SBC
 
             return ((rawControlData[mask.bytePos] & mask.maskValue) > 0);
         }
-
-        /// <summary>
-        /// Checks the individual button state
-        /// </summary>
-        /// <param name="buf">Int value of button enum</param>
-        public bool GetButtonState(SBC.ButtonEnum button)
-        {
-            return GetButtonState((int)button);
-        }
-
         /// <summary>
         /// Checks if individual button state has changed
         /// </summary>
@@ -522,7 +512,6 @@ namespace SBC
                         updateLights = true;
                     }
                     
-                    //check button - light mapping
 					if(ButtonLights.ContainsKey(i))
 					{
 						updateLights = true;
@@ -604,18 +593,8 @@ namespace SBC
 			pollTimer.Stop();
 			pollTimer.Elapsed -= (pollTimer_Elapsed);
 
-			if (MyUsbDevice != null) {
-				if (MyUsbDevice.IsOpen) {
-					IUsbDevice wholeUsbDevice = MyUsbDevice as IUsbDevice;
-					if (!ReferenceEquals(wholeUsbDevice, null)) {
-						// Release interface #0.
-						wholeUsbDevice.ReleaseInterface(0);
-					}
-					MyUsbDevice.Close();
-				}
-			}
-			
-			MyUsbDevice = null;
+
+            MyUsbDevice.Dispose();
 		}
 		
 		/// <summary>
@@ -627,41 +606,41 @@ namespace SBC
 		}
 		
 		/// <summary>
-		/// Corresponds to the "Rotation Lever" joystick on the left.
+        /// Corresponds to the "Rotation Lever" joystick on the left. range: -512 - 511
 		/// </summary>
 		public int RotationLever {
             get { return getSignedAxisValue(13, 14); }
         }
 
 		/// <summary>
-		/// Corresponds to the "Sight Change" analog stick on the "Rotation Lever" joystick.  X Axis value.
+        /// Corresponds to the "Sight Change" analog stick on the "Rotation Lever" joystick.  X Axis value. range: -512 - 511
 		/// </summary>
 		public int SightChangeX {
             get { return getSignedAxisValue(15, 16); }
         }
 
 		/// <summary>
-		/// Corresponds to the "Sight Change" analog stick on the "Rotation Lever" joystick.  Y Axis value.
+		/// Corresponds to the "Sight Change" analog stick on the "Rotation Lever" joystick.  Y Axis value. range: -512 - 511
 		/// </summary>
 		public int SightChangeY {
             get { return getSignedAxisValue(17, 18); }
         }
 
 		/// <summary>
-		/// Corresponds to the "Aiming Lever" joystick on the right.  X Axis value.
+        /// Corresponds to the "Aiming Lever" joystick on the right.  X Axis value. range: 0 - 1023
 		/// </summary>
 		public int AimingX {
 			get {return getAxisValue(9,10);}
 		}
 
 		/// <summary>
-		/// Corresponds to the "Aiming Lever" joystick on the right.  Y Axis value.
+		/// Corresponds to the "Aiming Lever" joystick on the right.  Y Axis value. range: 0 - 1023
 		/// </summary>
 		public int AimingY {
             get { return getAxisValue(11, 12); }
 		}
         /// <summary>
-        /// Used to bitshift array and actually return proper 10-bit value for axis.
+        /// Used to bitshift array and actually return proper 10-bit value for axis, 0 - 1023
         /// </summary>
         private int getAxisValue(int firstIndex, int SecondIndex)
         {
@@ -674,7 +653,7 @@ namespace SBC
         }
 
         /// <summary>
-        /// Used to bitshift array and actually return proper 10-bit value for axis.
+        /// Used to bitshift array and actually return proper 10-bit value for axis, -512 - 511.
         /// </summary>
         private int getSignedAxisValue(int firstIndex, int SecondIndex)
         {
@@ -691,21 +670,21 @@ namespace SBC
         }
 
 		/// <summary>
-		/// Corresponds to the left pedal on the pedal block
+		/// Corresponds to the left pedal on the pedal block, range 0 - 1023
 		/// </summary>
 		public int LeftPedal {
             get { return getAxisValue(19, 20); }
         }
 
 		/// <summary>
-		/// Corresponds to the middle pedal on the pedal block
+		/// Corresponds to the middle pedal on the pedal block, range 0 - 1023
 		/// </summary>
 		public int MiddlePedal {
             get { return getAxisValue(21, 22); }
         }
 
 		/// <summary>
-		/// Corresponds to the right pedal on the pedal block
+		/// Corresponds to the right pedal on the pedal block, range 0 - 1023
 		/// </summary>
 		public int RightPedal {
             get { return getAxisValue(23, 24); }
@@ -720,7 +699,7 @@ namespace SBC
 		}
 		
 		/// <summary>
-		/// Corresponds to the gear lever on the left block.
+        /// Corresponds to the gear lever on the left block.  range: -2,-1,1,2,3,4,5
 		/// </summary>
 		public int GearLever {
             get { return (int)unchecked((sbyte)rawControlData[25]); }
@@ -790,6 +769,25 @@ namespace SBC
             }
             bin.Append("\n");
             return bin.ToString();
+        }
+
+        public int signedAxisMin
+        {
+            get{return _signedAxisMin;}
+        }
+        public int signedAxisMax
+        {
+            get{return _signedAxisMax;}
+        }
+
+        public int unsignedAxisMin
+        {
+            get{return _unsignedAxisMin;}
+        }
+
+        public int unsignedAxisMax
+        {
+            get { return _unsignedAxisMax; }
         }
     }
 }
