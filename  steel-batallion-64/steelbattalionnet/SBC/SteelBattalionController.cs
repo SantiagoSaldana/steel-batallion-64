@@ -280,11 +280,6 @@ namespace SBC
 		/// Refreshes the LED buffer/state on the controller
 		/// </summary>
 		public void RefreshLEDState() {
-			/*ErrorCode ec = ErrorCode.None;
-			int bytesWritten;
-			
-			ec = writer.Write(rawLEDData, 1000, out bytesWritten);
-			if (ec != ErrorCode.None) throw new Exception(UsbDevice.LastErrorString);*/
             writer.Write(rawLEDData);
 		}
 
@@ -312,6 +307,9 @@ namespace SBC
             //zadig creates a new device GUID everytime you install, so I placed file in
             //C:\Users\salds_000\Documents\Visual Studio 2013\Projects\steel_batallion-64\steelbattalionnet\winusb\usb_driver
             //check inf file for guid. Right clicking the inf file installs it.
+
+            //after installation you can find this in regedit
+            //HKEY_LOCAL_MACHINE\System\CurrentControlSet\Enum\USB\VID_0A7B&PID_D000\6&688a3b8&0&1\Device Parameters\DeviceInterfaceGUIDs
             USBDeviceInfo[] details = USBDevice.GetDevices("{5C2B3F1A-E9B8-4BD6-9D19-8A283B85726E}");
             USBDeviceInfo match = details.First(info => info.VID == 0x0A7B && info.PID == 0xD000);
             MyUsbDevice = new USBDevice(match);

@@ -96,10 +96,11 @@ namespace SBC
                     compilerParams.ReferencedAssemblies.Add(assembly.Location);
                 }
 
-			    String[] fileNames = new String[1];
-
+                String fileSource = File.ReadAllText(fileString.Text);
+                //make .cs files compatible with old code
+                fileSource = fileSource.Replace("Microsoft.DirectX.DirectInput.Key", "SBC.Key");
                 
-			    CompilerResults results = codeProvider.CompileAssemblyFromFile(compilerParams, fileString.Text);
+                CompilerResults results = codeProvider.CompileAssemblyFromSource(compilerParams, fileSource);
 			    if (results.Errors.Count > 0)
 			    {
 				    //MessageBox.Show("There were errors");

@@ -41,26 +41,14 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="LibUsbDotNet.dll" size="150016">
-      <assemblyIdentity name="LibUsbDotNet" version="2.2.8.104" language="neutral" processorArchitecture="msil" />
-      <hash>
-        <dsig:Transforms>
-          <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
-        </dsig:Transforms>
-        <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
-        <dsig:DigestValue>WHJTFUmlhCwCVSdvHqxj4aFNT8k=</dsig:DigestValue>
-      </hash>
-    </dependentAssembly>
-  </dependency>
-  <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="Steel_Batallion_64_v2.exe" size="72192">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="Steel_Batallion_64_v2.exe" size="73728">
       <assemblyIdentity name="Steel_Batallion_64_v2" version="2.0.0.0" language="neutral" processorArchitecture="x86" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
-        <dsig:DigestValue>TBxjJ9h1aKrFxho3uA2cqDEYgdU=</dsig:DigestValue>
+        <dsig:DigestValue>93kUFMzfEhMhRJ9vxswBxMbTLKA=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
@@ -73,6 +61,18 @@
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
         <dsig:DigestValue>kzPHU5N9Mzg9ucC0VQG+AzNqs1Y=</dsig:DigestValue>
+      </hash>
+    </dependentAssembly>
+  </dependency>
+  <dependency>
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="WinUSBNet.dll" size="45056">
+      <assemblyIdentity name="WinUSBNet" version="1.0.1.0" language="neutral" processorArchitecture="msil" />
+      <hash>
+        <dsig:Transforms>
+          <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+        </dsig:Transforms>
+        <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
+        <dsig:DigestValue>j2vRfRblPPAigCDoMoHFax6yw84=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>

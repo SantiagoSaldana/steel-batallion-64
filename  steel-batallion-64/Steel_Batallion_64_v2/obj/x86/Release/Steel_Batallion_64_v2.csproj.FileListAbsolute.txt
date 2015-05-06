@@ -20,9 +20,7 @@ C:\Users\salds_000\Documents\Visual Studio 2013\Projects\steel_batallion-64\Stee
 C:\Users\salds_000\Documents\Visual Studio 2013\Projects\steel_batallion-64\Steel_Batallion_64_v2\bin\x86\Release\Steel_Batallion_64_v2.exe.manifest
 C:\Users\salds_000\Documents\Visual Studio 2013\Projects\steel_batallion-64\Steel_Batallion_64_v2\bin\x86\Release\Steel_Batallion_64_v2.application
 C:\Users\salds_000\Documents\Visual Studio 2013\Projects\steel_batallion-64\Steel_Batallion_64_v2\bin\x86\Release\Steel_Batallion_64_v2.exe
-C:\Users\salds_000\Documents\Visual Studio 2013\Projects\steel_batallion-64\Steel_Batallion_64_v2\bin\x86\Release\LibUsbDotNet.dll
 C:\Users\salds_000\Documents\Visual Studio 2013\Projects\steel_batallion-64\Steel_Batallion_64_v2\bin\x86\Release\WindowsInput.dll
-C:\Users\salds_000\Documents\Visual Studio 2013\Projects\steel_batallion-64\Steel_Batallion_64_v2\bin\x86\Release\LibUsbDotNet.xml
 C:\Users\salds_000\Documents\Visual Studio 2013\Projects\steel_batallion-64\Steel_Batallion_64_v2\bin\x86\Release\WindowsInput.pdb
 C:\Users\salds_000\Documents\Visual Studio 2013\Projects\steel_batallion-64\Steel_Batallion_64_v2\bin\x86\Release\WindowsInput.xml
 C:\Users\salds_000\Documents\Visual Studio 2013\Projects\steel_batallion-64\Steel_Batallion_64_v2\obj\x86\Release\SBC.Form1.resources
@@ -32,3 +30,6 @@ C:\Users\salds_000\Documents\Visual Studio 2013\Projects\steel_batallion-64\Stee
 C:\Users\salds_000\Documents\Visual Studio 2013\Projects\steel_batallion-64\Steel_Batallion_64_v2\obj\x86\Release\Steel_Batallion_64_v2.exe.manifest
 C:\Users\salds_000\Documents\Visual Studio 2013\Projects\steel_batallion-64\Steel_Batallion_64_v2\obj\x86\Release\Steel_Batallion_64_v2.application
 C:\Users\salds_000\Documents\Visual Studio 2013\Projects\steel_batallion-64\Steel_Batallion_64_v2\obj\x86\Release\Steel_Batallion_64_v2.exe
+C:\Users\salds_000\Documents\Visual Studio 2013\Projects\steel_batallion-64\Steel_Batallion_64_v2\obj\x86\Release\Steel_Batallion_64_v2.csprojResolveAssemblyReference.cache
+C:\Users\salds_000\Documents\Visual Studio 2013\Projects\steel_batallion-64\Steel_Batallion_64_v2\bin\x86\Release\WinUSBNet.dll
+C:\Users\salds_000\Documents\Visual Studio 2013\Projects\steel_batallion-64\Steel_Batallion_64_v2\bin\x86\Release\WinUSBNet.xml

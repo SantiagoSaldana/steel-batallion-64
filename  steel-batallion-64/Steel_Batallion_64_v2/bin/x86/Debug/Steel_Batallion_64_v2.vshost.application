@@ -7,14 +7,14 @@
     <framework targetVersion="4.0" profile="Full" supportedRuntime="4.0.30319" />
   </compatibleFrameworks>
   <dependency>
-    <dependentAssembly dependencyType="install" codebase="Steel_Batallion_64_v2.exe.manifest" size="4935">
+    <dependentAssembly dependencyType="install" codebase="Steel_Batallion_64_v2.exe.manifest" size="4926">
       <assemblyIdentity name="Steel_Batallion_64_v2.exe" version="2.0.0.2" publicKeyToken="0000000000000000" language="neutral" processorArchitecture="x86" type="win32" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
-        <dsig:DigestValue>XBOTdKjeeGO8vxFzC2I0dTCfeGM=</dsig:DigestValue>
+        <dsig:DigestValue>D3NkRxUGfkWlN7KFsdkOza80VwU=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
