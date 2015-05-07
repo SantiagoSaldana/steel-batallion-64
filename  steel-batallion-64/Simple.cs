@@ -8,13 +8,9 @@ public class DynamicClass
 {        String debugString = "";
         SteelBattalionController controller;
         vJoy joystick;
-        bool acquired;
-        bool mouseStarted = false;
-        int desiredX;
-        int desiredY;
-        int currentX = -1;
-        int currentY = -1;
-
+		int vJoyButtons = 8;//change to 39 to fully support SBC, need to use vJoy config to change
+		//number of buttons to 39.
+		bool acquired;
         const int refreshRate = 50;//number of milliseconds between call to mainLoop
 
 
@@ -36,21 +32,14 @@ public class DynamicClass
             }
             
             controller.AddButtonKeyLightMapping(ButtonEnum.CockpitHatch, true, 3, SBC.Key.A, true);//last true means if you hold down the button,		
-            controller.AddButtonKeyLightMapping(ButtonEnum.FunctionF1, true, 3, Microsoft.DirectX.DirectInput.Key.B, true);
+            //no longer using Microsoft.DirectX.DirectInput but included this in here to show that I made
+			//code backwards compatible
+			controller.AddButtonKeyLightMapping(ButtonEnum.FunctionF1, true, 3, Microsoft.DirectX.DirectInput.Key.B, true);
             controller.AddButtonKeyMapping(ButtonEnum.RightJoyMainWeapon, SBC.Key.C, true);
 
             joystick = new vJoy();
             acquired = joystick.acquireVJD(1);
             joystick.resetAll();//have to reset before we use it
-
-            joystick.setAxis(1,32768 / 2, HID_USAGES.HID_USAGE_SL1);
-            joystick.setAxis(1,32768 / 2, HID_USAGES.HID_USAGE_X);
-            joystick.setAxis(1,32768 / 2, HID_USAGES.HID_USAGE_Y);
-            joystick.setAxis(1,32768 / 2, HID_USAGES.HID_USAGE_Z);//throttle
-            joystick.setAxis(1,32768 / 2, HID_USAGES.HID_USAGE_RZ);
-            joystick.setAxis(1,32768 / 2, HID_USAGES.HID_USAGE_SL0);
-            joystick.setAxis(1,32768 / 2, HID_USAGES.HID_USAGE_RX);
-            joystick.setAxis(1,32768 / 2, HID_USAGES.HID_USAGE_RY);
 
         }
 
@@ -60,62 +49,25 @@ public class DynamicClass
             return refreshRate;
         }
 
-        private uint getDegrees(double x, double y)
-        {
-            uint temp = (uint)(System.Math.Atan(y / x) * (180 / Math.PI));
-            if (x < 0)
-                temp += 180;
-            if (x > 0 && y < 0)
-                temp += 360;
-
-            temp += 90;//origin is vertical on POV not horizontal
-
-            if (temp > 360)//by adding 90 we may have gone over 360
-                temp -= 360;
-
-            temp *= 100;
-
-            if (temp > 35999)
-                temp = 35999;
-            if (temp < 0)
-                temp = 0;
-            return temp;
-        }
-
-        //	private int scaledValue(int min, int middle, int max, int deadZone)
-
-
-
         //this gets called once every refreshRate milliseconds by main program
         public void mainLoop()
         {
-
-
-
-
             joystick.setAxis(1,controller.Scaled.GearLever,HID_USAGES.HID_USAGE_SL1);
-
             joystick.setAxis(1,controller.Scaled.AimingX,HID_USAGES.HID_USAGE_X);
             joystick.setAxis(1,controller.Scaled.AimingY,HID_USAGES.HID_USAGE_Y);
-
-            joystick.setAxis(1,-1 * (controller.Scaled.RightPedal - controller.Scaled.MiddlePedal),HID_USAGES.HID_USAGE_Z);//throttle
+            joystick.setAxis(1,controller.Scaled.RightMiddlePedal,HID_USAGES.HID_USAGE_Z);//throttle
             joystick.setAxis(1,controller.Scaled.RotationLever,HID_USAGES.HID_USAGE_RZ);
             joystick.setAxis(1,controller.Scaled.SightChangeX,HID_USAGES.HID_USAGE_SL0);
             joystick.setAxis(1,controller.Scaled.SightChangeY,HID_USAGES.HID_USAGE_RX);
             joystick.setAxis(1,controller.Scaled.LeftPedal,HID_USAGES.HID_USAGE_RY);
 
-
-            joystick.setContPov(1,getDegrees(controller.SightChangeX, controller.SightChangeY), 1);
-
-
-            for (int i = 1; i <= 8; i++)
+			
+            for (int i = 1; i <= vJoyButtons; i++)
             {
                 joystick.setButton((bool)controller.GetButtonState(i - 1), (uint)1, (char)(i - 1));
             }
 
             joystick.sendUpdate(1);
-
-
         }
 
         //new necessary function used for debugging purposes
