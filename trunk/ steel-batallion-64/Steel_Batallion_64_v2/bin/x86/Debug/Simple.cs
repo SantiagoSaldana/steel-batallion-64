@@ -98,7 +98,7 @@ public class DynamicClass
             joystick.setAxis(1,controller.Scaled.AimingX,HID_USAGES.HID_USAGE_X);
             joystick.setAxis(1,controller.Scaled.AimingY,HID_USAGES.HID_USAGE_Y);
 
-            joystick.setAxis(1,-1 * (controller.Scaled.RightPedal - controller.Scaled.MiddlePedal),HID_USAGES.HID_USAGE_Z);//throttle
+            joystick.setAxis(1,controller.Scaled.RightMiddlePedal,HID_USAGES.HID_USAGE_Z);//throttle
             joystick.setAxis(1,controller.Scaled.RotationLever,HID_USAGES.HID_USAGE_RZ);
             joystick.setAxis(1,controller.Scaled.SightChangeX,HID_USAGES.HID_USAGE_SL0);
             joystick.setAxis(1,controller.Scaled.SightChangeY,HID_USAGES.HID_USAGE_RX);

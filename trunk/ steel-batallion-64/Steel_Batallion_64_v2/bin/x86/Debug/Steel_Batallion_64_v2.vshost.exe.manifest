@@ -41,14 +41,14 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="Steel_Batallion_64_v2.exe" size="74240">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="Steel_Batallion_64_v2.exe" size="74752">
       <assemblyIdentity name="Steel_Batallion_64_v2" version="2.0.0.0" language="neutral" processorArchitecture="x86" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
-        <dsig:DigestValue>bytyyZf2Cz22rvS3zonstymw4FU=</dsig:DigestValue>
+        <dsig:DigestValue>Nxf3Q64ixxGz0RZagk3dtX1+yxc=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>

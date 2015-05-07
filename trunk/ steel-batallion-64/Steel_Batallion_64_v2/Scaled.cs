@@ -20,7 +20,12 @@ namespace SBC
             parentC = parentController;
         }
 
-        private int clamp(int value)
+        public int reverse(int value)
+        {
+            return clamp(vJoyMaxValue - value);
+        }
+
+        public int clamp(int value)
         {
             if(value < parentC.signedAxisMin) return  vJoyMinValue;
             if(value < parentC.signedAxisMax) return  vJoyMaxValue;
@@ -82,6 +87,16 @@ namespace SBC
         {
             get { return clamp(convertUnsignedAxis(parentC.MiddlePedal)); }
         }
+
+        /// <summary>
+        /// Corresponds to the middle pedal on the pedal block, range 0 - 1023
+        /// </summary>
+        public int RightMiddlePedal
+        {
+            get { return clamp((int)( reverse(MiddlePedal)/2.0f + RightPedal/2.0f)); }
+        }
+
+
 		
         /// <summary>
 		/// Corresponds to the tuner dial position.  The 9 o'clock postion is 0, and the 6 o'clock position is 12.
