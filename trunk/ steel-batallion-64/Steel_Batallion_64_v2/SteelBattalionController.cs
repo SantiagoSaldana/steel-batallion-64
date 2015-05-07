@@ -222,6 +222,12 @@ namespace SBC
             ButtonKeys[(int)button] = new KeyProperties(keyCode, holdDown);
         }
 
+        public void RemoveButtonKeyMapping(ButtonEnum button)
+        {
+            if (ButtonKeys.Contains((int)button))
+                ButtonKeys.Remove((int)button);//to save on later garbage collection
+        }
+
         public void AddButtonKeyMapping(ButtonEnum button, SBC.Key modifier, SBC.Key keyCode, bool holdDown)
         {
             ButtonKeys[(int)button] = new KeyProperties(modifier,keyCode, holdDown);
